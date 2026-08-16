@@ -299,8 +299,10 @@ wenn er die Software selbst gar nicht herausgibt. Das ist der Unterschied der
 AGPL zur gewöhnlichen GPL, und für eine Weboberfläche wie diese der
 entscheidende.
 
-Kommerzielle Nutzung unter anderen Bedingungen ist verhandelbar — der Urheber
-ist alleiniger Rechteinhaber (siehe [`NOTICE.md`](NOTICE.md)).
+Eine zweite Lizenz gibt es nicht, auch nicht gegen Bezahlung — die AGPL gilt
+für alle gleichermaßen, gewerblich wie privat. Umgekehrt heißt das: Beiträge
+kommen unter derselben Lizenz herein, und niemand muss dafür Rechte abtreten
+(siehe [`NOTICE.md`](NOTICE.md)).
 
 Die verwendeten Bibliotheken sind sämtlich permissiv lizenziert (MIT, BSD-3,
 Apache-2.0, PSF) — deshalb war der Wechsel überhaupt möglich: Permissive

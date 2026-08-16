@@ -33,9 +33,14 @@ Bibliotheken, alle permissiv lizenziert (siehe
 soll frei bleiben. Verbesserungen sollen bei denen ankommen, die sie
 gebrauchen können, statt in einem geschlossenen Produkt zu verschwinden.
 
-**Kommerzielle Nutzung unter anderen Bedingungen** ist verhandelbar: Der
-Urheber ist alleiniger Rechteinhaber und kann eine gesonderte Lizenz
-erteilen. Anfragen an <flowbridge@hofherweb.de>.
+**Es gibt keine zweite Lizenz.** FlowBridge steht unter der AGPL, und dabei
+bleibt es — auch für gewerbliche Nutzung. Wer die Bedingungen einhält, darf
+FlowBridge im Betrieb einsetzen, ohne jemanden zu fragen und ohne zu zahlen.
+Wer sie nicht einhalten möchte, kann sich das nicht abkaufen.
+
+Das ist eine bewusste Festlegung: Beiträge Dritter kommen unter derselben
+Lizenz herein und bleiben dort. Niemand muss Rechte abtreten, damit sie
+angenommen werden können.
 
 ## Name und Logo
 
