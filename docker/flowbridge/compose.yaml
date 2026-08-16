@@ -3,7 +3,18 @@
 # Holt das fertige Abbild von Docker Hub. Die NAS soll nur starten, nicht
 # bauen.
 #
-# Update spaeter:  docker compose pull && docker compose up -d
+# Update spaeter auf der Kommandozeile:
+#   docker compose pull && docker compose up -d
+#
+# `docker compose pull` holt ausdruecklich neu und ist deshalb mit :latest in
+# Ordnung. IM CONTAINER MANAGER DER SYNOLOGY GILT DAS NICHT: Dessen
+# "Erstellen" sieht nur nach, ob ein Abbild namens latest schon lokal liegt,
+# und nimmt dann das vorhandene - der Container startet neu und laeuft
+# weiterhin auf der alten Fassung, ohne dass irgendetwas es meldet. Dort also
+# die Versionsnummer in die image-Zeile eintragen statt :latest; die hat die
+# NAS noch nie gesehen und muss sie holen. Siehe
+# docs/inbetriebnahme-synology.html, Abschnitt "Auf eine neue Fassung
+# aktualisieren".
 #
 # Zum Bauen aus dem Quellcode gibt es daneben compose.build.yaml.
 

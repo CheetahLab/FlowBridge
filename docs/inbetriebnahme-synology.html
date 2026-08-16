@@ -943,12 +943,19 @@
       dann <strong>Update verfügbar</strong> mit der Nummer. Ein Klick darauf
       prüft sofort nach, statt auf den nächsten Durchlauf zu warten.
     </p>
-    <p>Geholt wird es im Container Manager:</p>
-    <p class="path">Image <span class="sep">›</span> cheetahlab/flowbridge <span class="sep">›</span> Aktualisieren</p>
     <p>
-      Neben dem Abbild steht dort ebenfalls <em>Update verfügbar</em>, sobald
-      eine neue Fassung vorliegt. Danach den Container neu erstellen:
+      Geholt wird es, indem du <strong>die Nummer in die Projektdatei
+      einträgst</strong>. Also nicht über einen Knopf, sondern über eine Zeile:
     </p>
+    <p class="path">Projekt <span class="sep">›</span> flowbridge <span class="sep">›</span> Aktion <span class="sep">›</span> Bearbeiten</p>
+    <p>
+      Dort die <code class="inline">image</code>-Zeile auf die Nummer ändern,
+      die FlowBridge dir gemeldet hat — aus
+    </p>
+    <p class="path">image: cheetahlab/flowbridge:latest</p>
+    <p>wird also zum Beispiel</p>
+    <p class="path">image: cheetahlab/flowbridge:2026.08.16-42</p>
+    <p>Speichern, dann neu erstellen:</p>
     <p class="path">Projekt <span class="sep">›</span> flowbridge <span class="sep">›</span> Aktion <span class="sep">›</span> Erstellen</p>
     <p>
       Deine Einstellungen und Zugangsdaten liegen im
@@ -958,31 +965,43 @@
     </p>
 
     <div class="warn">
-      <span class="label">Nicht „Zurücksetzen“ nehmen</span>
+      <span class="label">Warum die Nummer und nicht <code class="inline">latest</code></span>
       <p>
-        Naheliegend wäre <strong>Aktion › Zurücksetzen</strong>. Das holt aber
-        <em>nichts</em>: Die NAS sieht, dass sie ein Abbild namens
-        <code class="inline">latest</code> schon hat, und nimmt das vorhandene.
-        Der Container startet neu, alles wirkt richtig — und du läufst weiter
-        auf der alten Fassung.
+        Weil die NAS bei <code class="inline">latest</code> nachsieht, ob sie
+        ein Abbild <em>dieses Namens</em> schon hat — und wenn ja, das
+        vorhandene nimmt. Der Container startet neu, alles wirkt richtig — und
+        du läufst weiter auf der alten Fassung. Das ist die unangenehme Sorte
+        Fehler, weil sie sich nicht meldet.
       </p>
       <p>
-        Das ist die unangenehme Sorte Fehler, weil sie sich nicht meldet. Genau
-        so lief hier eine Fassung stundenlang weiter, während wir sie längst für
-        ersetzt hielten. <strong>Aktualisieren</strong> holt, „Zurücksetzen“
-        nicht — der Unterschied ist der ganze Punkt.
+        Eine Versionsnummer hat die NAS dagegen noch nie gesehen. Sie
+        <em>muss</em> holen. Deshalb ist das der Weg, der immer funktioniert.
+      </p>
+      <p>
+        Es gibt daneben <strong>Image › Aktualisieren</strong>, und das holt
+        auch. Nur erscheint der Hinweis <em>Update verfügbar</em> neben dem
+        Abbild erst, wenn die NAS von sich aus nachgesehen hat — das tut sie in
+        eigenem Takt, nicht beim Öffnen der Seite. Kurz nach einer neuen
+        Fassung steht dort also oft noch nichts, obwohl es längst etwas gibt.
+        Die Nummer einzutragen wartet auf niemanden.
+      </p>
+    </div>
+
+    <div class="warn">
+      <span class="label">Nicht „Zurücksetzen“ nehmen</span>
+      <p>
+        Naheliegend wäre <strong>Aktion › Zurücksetzen</strong>. Das holt
+        <em>nichts</em> — es startet nur neu, mit demselben Abbild wie vorher.
       </p>
     </div>
 
     <div class="note">
       <span class="label">Zurück auf eine ältere Fassung</span>
       <p>
-        Falls eine neue Fassung etwas kaputtmacht: Trag in der
-        <code class="inline">image</code>-Zeile statt
-        <code class="inline">:latest</code> eine feste Nummer ein und erstelle
-        neu.
+        Falls eine neue Fassung etwas kaputtmacht: dieselbe Zeile, nur mit der
+        alten Nummer.
       </p>
-      <p class="path">image: cheetahlab/flowbridge:2026.08.16-17</p>
+      <p class="path">image: cheetahlab/flowbridge:2026.08.16-39</p>
       <p>
         Versionsnummern sind auf Docker Hub <strong>unveränderlich</strong>
         gesetzt — unter einer einmal vergebenen Nummer liegt für immer genau
@@ -990,9 +1009,12 @@
         der vorher lief, und nicht auf etwas, das nur so heißt.
       </p>
       <p>
-        Zum Weiterarbeiten später wieder auf
-        <code class="inline">:latest</code> zurückstellen — sonst bleibst du auf
-        dem alten Stand stehen und bekommst keine Update-Hinweise mehr.
+        <strong>Stell dabei nicht auf <code class="inline">:latest</code>
+        zurück.</strong> Das klingt naheliegend, wirft dich aber still
+        zurück: Auf der NAS liegt unter diesem Namen noch die Fassung, die du
+        zuletzt darüber geholt hast — womöglich Monate alt. Bleib bei der
+        Nummer und trag beim nächsten Mal die neue ein. Die Update-Hinweise
+        bekommst du davon unabhängig, die kommen aus FlowBridge selbst.
       </p>
     </div>
   </section>
