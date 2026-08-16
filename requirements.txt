@@ -1,0 +1,6 @@
+# FlowBridge – Dependencies
+paho-mqtt==2.1.0
+PyYAML==6.0.3
+fastapi==0.139.0
+uvicorn[standard]==0.38.0
+httpx==0.28.1

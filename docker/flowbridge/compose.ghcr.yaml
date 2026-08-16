@@ -1,0 +1,62 @@
+# FlowBridge aus der oeffentlichen Registry - die Fassung zum Weitergeben.
+#
+# Diese Datei braucht KEINE Anmeldung an einer Registry - sie holt das Abbild
+# aus der oeffentlichen GitHub Container Registry.
+#
+#   Synology: Container Manager -> Projekt -> Erstellen
+#   Sonst:    docker compose -f compose.ghcr.yaml up -d
+#
+# Schritt-fuer-Schritt-Fassung fuer die Synology:
+#   docs/inbetriebnahme-synology.html
+#
+# VOR dem ersten Start zwei Dinge:
+#   1. Den Ordner unter "volumes" anlegen (siehe unten) - legt Docker ihn
+#      selbst an, gehoert er root, und FlowBridge laeuft bewusst als Nutzer
+#      1000 und koennte dort nicht schreiben.
+#   2. FLOWBRIDGE_PASSWORD setzen. Sonst laeuft FlowBridge kurzzeitig ohne
+#      Zugriffsschutz im Netz, bis jemand im Browser ein Passwort vergibt.
+
+services:
+  flowbridge:
+    image: ghcr.io/cheetahlab/flowbridge:latest
+    container_name: flowbridge
+    restart: unless-stopped
+
+    ports:
+      # Links der Port am Geraet, rechts der im Container - nur die linke
+      # Zahl aendern, falls 8081 schon belegt ist.
+      - "8081:8080"
+
+    environment:
+      FLOWBRIDGE_CONFIG: /config/config.yaml
+      TZ: Europe/Berlin
+      FLOWBRIDGE_PASSWORD: "hier-ein-gutes-passwort"
+
+    volumes:
+      # Vorher anlegen - beide Ebenen. Dort liegen Konfiguration und
+      # gemerkte Sollwerte.
+      #
+      # Der Datenordner ist bewusst ein UNTERordner: Der Container Manager
+      # legt seine eigene docker-compose.yml im Projektordner ab. Zeigte der
+      # Mount direkt dorthin, laege sie mitten in der Konfiguration - und ein
+      # "Projekt loeschen" naehme die Zugangsdaten gleich mit.
+      - /volume1/docker/flowbridge/data:/config
+
+    healthcheck:
+      # /api/auth/state ist der einzige Endpunkt ohne Anmeldung - alles andere
+      # antwortet mit 401 und waere als Lebenszeichen unbrauchbar.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/auth/state', timeout=5)"
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+    stop_grace_period: 20s

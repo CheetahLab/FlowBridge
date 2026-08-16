@@ -1,0 +1,4 @@
+# Shell-Skripte MUESSEN LF behalten. Mit CRLF ausgecheckt scheitert auf Linux
+# schon die Shebang-Zeile ("bad interpreter: /bin/sh^M").
+*.sh text eol=lf
+scripts/githooks/** text eol=lf

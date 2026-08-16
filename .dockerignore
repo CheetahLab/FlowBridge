@@ -1,0 +1,45 @@
+# Was NICHT in den Build-Kontext gehoert.
+#
+# Zwei Gruende, und der zweite ist der wichtigere:
+#
+# 1. Grösse. Ohne diese Datei wandern .venv (55 MB) und node_modules (70 MB)
+#    bei jedem Build zum Docker-Daemon - auf der NAS ueber das Netz.
+#
+# 2. Geheimnisse. Die config.yaml enthaelt Access-/Secret-Key und den
+#    Passwort-Hash. Der Dockerfile kopiert sie zwar nicht ins Abbild, aber
+#    im Kontext hat sie nichts verloren: ein spaeter ergaenztes "COPY . ."
+#    wuerde sie stillschweigend mitnehmen. Die Konfiguration kommt zur
+#    Laufzeit ueber den Mount, nie ueber das Abbild.
+
+# --- Geheimnisse und Laufzeitdaten
+config.yaml
+*.log
+*.log.*
+scripts/quota_dump_*.json
+scripts/mqtt_fields_*.json
+
+# --- Abhaengigkeiten (werden im Abbild selbst installiert)
+.venv/
+node_modules/
+frontend/node_modules/
+
+# --- Baustaende (die Frontend-Stufe baut selbst)
+frontend/dist/
+frontend/*.tsbuildinfo
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# --- Nichts davon braucht die Laufzeit
+.git/
+.github/
+docs/
+assets/
+tests/
+scripts/
+docker/
+# ... mit einer Ausnahme: der Einstiegspunkt gehoert ins Abbild.
+!docker/entrypoint.sh
+README*.md
+.gitignore
+.gitattributes

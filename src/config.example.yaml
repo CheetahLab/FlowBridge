@@ -1,0 +1,26 @@
+# FlowBridge – Konfigurationsvorlage
+# -------------------------------------------------
+# Wird normalerweise NICHT von Hand editiert – das Setup-UI schreibt config.yaml.
+# Diese Datei dient nur als Referenz/Fallback fuer Headless-Deployments.
+# config.yaml ist gitignored und enthaelt echte Zugangsdaten.
+
+ecoflow:
+  access_key: "DEIN_ECOFLOW_ACCESS_KEY"
+  secret_key: "DEIN_ECOFLOW_SECRET_KEY"
+  devices:
+    - sn: "R331XXXXXXXXXXXX"
+      name: "River 2 Pro Wohnzimmer"
+
+mqtt:
+  host: "192.168.x.x"          # lokaler Broker (Mosquitto/EisBaer/HA)
+  port: 1883
+  client_id: "flowbridge-gw"   # min. 10 Zeichen, falls EisBaer-Broker
+  username: ""
+  password: ""
+  base_topic: "flowbridge"
+  retain: true
+  poll_interval_seconds: 30
+
+ui:
+  language: "de"                # "de" oder "en"
+  theme: "dark"                 # "dark" oder "light"

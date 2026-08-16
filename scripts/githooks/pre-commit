@@ -1,0 +1,61 @@
+#!/bin/sh
+#
+# Schreibt die Versionsnummer nach VERSION und legt sie in DENSELBEN Commit.
+# Liegen unter scripts/pre-commit.d/ eigene Zusatzschritte, laufen sie davor
+# (siehe unten) - ohne diesen Ordner tut der Hook nur das Erste.
+#
+# Schema: JAHR.MONAT.TAG-ZAEHLER (z. B. 2026.08.13-02). Der Zaehler ist der
+# wievielte Commit des heutigen Tages.
+#
+# Warum pre-commit und nicht post-commit: nur so steckt die Nummer im Commit,
+# den sie bezeichnet. Ein post-commit-Hook muesste nachtraeglich amenden oder
+# einen zweiten Commit anlegen - genau der Tanz, den das Ein-Commit-Ritual
+# abgeschafft hat.
+#
+# Aktivieren (einmalig pro Klon):
+#   git config core.hooksPath scripts/githooks
+#
+# Bekannte Eigenart: bei `git commit --amend` zaehlt der bereits vorhandene
+# Commit mit, die Nummer spraenge also eine Stelle weiter, obwohl gar kein
+# neuer Commit entsteht. Ein Amend laesst sich im pre-commit nicht zuverlaessig
+# erkennen, deshalb beim Nachbessern eines noch ungepushten Commits:
+#
+#   git commit --amend --no-edit --no-verify
+#
+# Das ist der einzige Fall, in dem --no-verify richtig ist.
+
+set -e
+
+heute_datei=$(date +%Y.%m.%d)
+heute_iso=$(date +%Y-%m-%d)
+
+# Commits von heute zaehlen; +1 fuer den, der gerade entsteht.
+# 2>/dev/null faengt das leere Repository ab (noch kein HEAD).
+bisher=$(git log --since="$heute_iso 00:00:00" --oneline 2>/dev/null | wc -l | tr -d ' ')
+zaehler=$(printf "%02d" $((bisher + 1)))
+
+echo "$heute_datei-$zaehler" > VERSION
+git add VERSION
+
+# --- Optionale Vorpruefung ------------------------------------------------
+#
+# Liegt scripts/pre-commit.d/ vor, wird jedes Skript darin ausgefuehrt. Der
+# Ordner ist fuer eigene Zusatzschritte gedacht und gehoert nicht zum
+# Lieferumfang - fehlt er, entfaellt dieser Teil ersatzlos. Zum Bauen und
+# Mitarbeiten wird er nicht gebraucht.
+#
+# Uebergeben wird `git write-tree`, nicht HEAD: Im pre-commit gibt es den
+# neuen Commit noch nicht, HEAD zeigte also auf den vorigen Stand - also auf
+# alles ausser dem, was gerade hinzukommt. Der Baum aus dem Index ist genau
+# das, was gleich committet wird.
+if [ -d scripts/pre-commit.d ]; then
+    baum=$(git write-tree)
+    for schritt in scripts/pre-commit.d/*.sh; do
+        [ -f "$schritt" ] || continue
+        if ! sh "$schritt" --schnell "$baum"; then
+            echo
+            echo "Commit abgebrochen - siehe oben."
+            exit 1
+        fi
+    done
+fi

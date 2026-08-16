@@ -1,0 +1,19 @@
+config.yaml
+scripts/quota_dump_*.json
+scripts/mqtt_fields_*.json
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+*.log
+# Rotierte Diagnose-Protokolle (flowbridge.log.1, .2)
+*.log.*
+
+# Druckfassung von docs/inbetriebnahme-synology.html.
+# Nicht eingecheckt: Das PDF aendert sich bei jeder Textzeile komplett, und
+# eine eingecheckte Fassung, die nicht mehr zum HTML passt, ist schlechter
+# als gar keine.
+docs/FlowBridge-Synology-Anleitung.pdf

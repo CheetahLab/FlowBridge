@@ -1,0 +1,59 @@
+:root {
+  --fb-polar-navy: #0B1324;
+  --fb-deep-blue: #0E1F3A;
+  --fb-electric-blue: #0A6BFF;
+  --fb-ice-blue: #7DB7FF;
+  --fb-arctic-white: #F7F9FC;
+  --fb-slate-gray: #6B778C;
+  --fb-signal-orange: #FF7A00;
+
+  --fb-dark-bg: var(--fb-polar-navy);
+  --fb-dark-panel: #071224;
+  --fb-dark-line: #243A5E;
+  --fb-dark-text: var(--fb-arctic-white);
+  --fb-dark-muted: #A9B8D0;
+
+  --fb-light-bg: var(--fb-arctic-white);
+  --fb-light-panel: #FFFFFF;
+  --fb-light-line: #D7DFEB;
+  --fb-light-text: var(--fb-polar-navy);
+  --fb-light-muted: #53657B;
+
+  --fb-flow: var(--fb-electric-blue);
+  --fb-flow-soft: var(--fb-ice-blue);
+  --fb-accent: var(--fb-signal-orange);
+
+  /* Status-Ampel: bewusst NICHT aus der Marken-Palette, sondern nach
+     gelernter Bedeutung (gruen = laeuft, rot = weg, blau = keine Aussage). */
+  --fb-status-online: limegreen;
+  --fb-status-offline: red;
+  --fb-status-unknown: var(--fb-electric-blue);
+}
+
+/* Dark ist Default (Operator-Look) */
+:root,
+:root[data-theme="dark"] {
+  --fb-bg: var(--fb-dark-bg);
+  --fb-panel: var(--fb-dark-panel);
+  --fb-line: var(--fb-dark-line);
+  --fb-text: var(--fb-dark-text);
+  --fb-muted: var(--fb-dark-muted);
+  /* Fuellung der Protocol-Rail-Kapsel im Logo (Werte aus den CI-SVGs) */
+  --fb-rail-fill: #102440;
+  /* Farbe fuer hervorgehobene Zahlenwerte. Auf dunklem Grund traegt das
+     helle Eisblau gut. */
+  --fb-value: var(--fb-ice-blue);
+}
+
+:root[data-theme="light"] {
+  --fb-bg: var(--fb-light-bg);
+  --fb-panel: var(--fb-light-panel);
+  --fb-line: var(--fb-light-line);
+  --fb-text: var(--fb-light-text);
+  --fb-muted: var(--fb-light-muted);
+  --fb-rail-fill: #EEF5FF;
+  /* Eisblau auf Weiss ergibt nur ~2:1 Kontrast - die Messwerte waeren kaum
+     lesbar. Deshalb im Hellmodus ein dunkleres Blau derselben Familie
+     (~6:1 gegen Weiss). */
+  --fb-value: #0A57CC;
+}

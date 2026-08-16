@@ -1,0 +1,1396 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fb-bg);
+  color: var(--fb-text);
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+.fb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--fb-line);
+  background: var(--fb-panel);
+}
+
+/* Wort-Bild-Marke. Die Groesse steuert allein font-size - Kachel und Abstand
+   sind in em bemessen und wachsen mit. */
+.fb-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.fb-logo-mark {
+  width: 1.45em;
+  height: 1.45em;
+  flex: none;
+  display: block;
+}
+
+.fb-logo-wort {
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  color: var(--fb-text);
+  white-space: nowrap;
+}
+
+/* Traegt die Zweiteilung des Namens, seit das Zeichen nicht mehr dazwischen
+   steht. --fb-value statt Ice Blue direkt: auf Hell waere Ice Blue zu blass
+   (derselbe Grund wie bei den Messwerten). */
+.fb-logo-akzent {
+  color: var(--fb-value);
+}
+
+.fb-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fb-toggle {
+  background: transparent;
+  border: 1px solid var(--fb-line);
+  color: var(--fb-text);
+  border-radius: 5px;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.fb-toggle:hover {
+  border-color: var(--fb-flow-soft);
+}
+
+.fb-main {
+  padding: 1.25rem;
+}
+
+.fb-card {
+  background: var(--fb-panel);
+  border: 1px solid var(--fb-line);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  max-width: 420px;
+}
+
+.fb-muted {
+  color: var(--fb-muted);
+  font-size: 0.9rem;
+}
+
+.fb-card-wide {
+  max-width: 640px;
+}
+
+.fb-card h2,
+.fb-card h3 {
+  margin-top: 0;
+}
+
+.fb-card h3 {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--fb-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.fb-field input,
+.fb-field select,
+.fb-device-row input,
+.fb-limit-input {
+  background: var(--fb-bg);
+  border: 1px solid var(--fb-line);
+  color: var(--fb-text);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.9rem;
+  cursor: text;
+}
+
+/* Auswahlfelder erben die Schrift nicht von selbst und wuerden im
+   Dark-Theme sonst in Systemfarben stehen - weisser Kasten mitten in der
+   dunklen Kachel. `color-scheme` faerbt zusaetzlich das aufgeklappte Menue
+   und den Pfeil, die der Browser selbst zeichnet und die CSS nicht
+   erreicht. */
+.fb-field select {
+  font-family: inherit;
+  cursor: pointer;
+  color-scheme: dark;
+}
+
+/* Nur ueber data-theme, nicht ueber prefers-color-scheme: FlowBridge setzt
+   das Attribut immer selbst (App.tsx), die Systemvorliebe spielt hier also
+   keine Rolle. */
+:root[data-theme="light"] .fb-field select {
+  color-scheme: light;
+}
+
+.fb-field input:disabled,
+.fb-field select:disabled,
+.fb-device-row input:disabled,
+.fb-limit-input:disabled {
+  cursor: not-allowed;
+}
+
+.fb-field input:focus,
+.fb-field select:focus,
+.fb-device-row input:focus {
+  outline: none;
+  border-color: var(--fb-flow);
+}
+
+.fb-device-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.fb-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.fb-toggle-primary {
+  background: var(--fb-flow);
+  border-color: var(--fb-flow);
+  color: var(--fb-arctic-white);
+}
+
+.fb-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fb-status-ok {
+  color: var(--fb-value);
+  font-size: 0.85rem;
+}
+
+.fb-status-error {
+  color: var(--fb-accent);
+  font-size: 0.85rem;
+}
+
+/* Doppelkachel je Gerät: Messwerte/Bedienung links, Verlauf rechts.
+   Die linke Spalte hat feste Breite, damit die 4er-Kachelreihen darin nicht
+   bei jeder Fensterbreite neu umbrechen. */
+.fb-device-pair {
+  display: grid;
+  /* 32rem: bei vier Kacheln bleiben so ~7rem je Kachel - genug, damit
+     Beschriftungen wie "AC-Ausgangsleistung" nicht zerfasern. */
+  grid-template-columns: 32rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 60rem) {
+  .fb-device-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.fb-device-pair > .fb-card {
+  max-width: none;
+}
+
+/* Feste Spaltenzahl statt auto-fill: sonst springt die Anordnung beim
+   Ziehen des Fensters ständig um. */
+.fb-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0.75rem 0 1rem;
+}
+
+/* Auf Telefonbreite waeren vier Spalten je ~67px zu eng - die Beschriftungen
+   brechen dann dreizeilig um. Feste Spaltenzahl bleibt, nur kleiner. */
+@media (max-width: 30rem) {
+  .fb-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.fb-metric {
+  background: var(--fb-bg);
+  border: 1px solid var(--fb-line);
+  border-radius: 10px;
+  padding: 0.5rem 0.6rem;
+}
+
+.fb-metric-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--fb-value);
+}
+
+.fb-metric-unit {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--fb-muted);
+}
+
+.fb-metric-label {
+  font-size: 0.7rem;
+  color: var(--fb-muted);
+  line-height: 1.2;
+  /* Lange Wörter ("AC-Ausgangsleistung") sauber umbrechen statt überlaufen. */
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+.fb-chart-card {
+  min-height: 100%;
+}
+
+.fb-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.fb-chart-range {
+  display: flex;
+  gap: 0.15rem;
+}
+
+.fb-chart {
+  width: 100%;
+  height: auto;
+  margin-top: 0.5rem;
+}
+
+.fb-chart-tick {
+  fill: var(--fb-muted);
+  font-size: 9px;
+}
+
+.fb-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.fb-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: none;
+  color: var(--fb-text);
+  font-size: 0.75rem;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0.1rem 0;
+}
+
+.fb-legend-off {
+  opacity: 0.35;
+}
+
+.fb-legend-dot {
+  width: 0.6rem;
+  height: 0.2rem;
+  border-radius: 2px;
+  flex: none;
+}
+
+.fb-legend-value {
+  color: var(--fb-muted);
+}
+
+.fb-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--fb-line);
+  font-size: 0.9rem;
+}
+
+.fb-switch {
+  background: var(--fb-bg);
+  border: 1px solid var(--fb-line);
+  color: var(--fb-muted);
+  border-radius: 5px;
+  padding: 0.3rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  min-width: 3.5rem;
+}
+
+.fb-switch-on {
+  background: var(--fb-flow);
+  border-color: var(--fb-flow);
+  color: var(--fb-arctic-white);
+}
+
+/* Feste Breite fuer die Eingabe-Gruppe, damit Limit-Zeilen und Schalter-Zeilen
+   auf derselben rechten Kante enden (vorher wanderte das Feld je nach
+   Label-Laenge). */
+.fb-limit-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.fb-limit-input {
+  width: 4.5rem;
+  text-align: right;
+}
+
+/* Native Zahlen-Pfeilchen ausblenden - fuer ALLE Zahlenfelder, nicht nur
+   die Limit-Zeilen (der Port in der Einrichtung ist auch eines).
+   Jeder Browser zeigt sie anders: Firefox dauerhaft, Chromium und damit
+   Vivaldi erst beim Hineinklicken. Das hatte zwei sichtbare Folgen - in
+   Firefox wirkte das 4.5rem breite Feld gequetscht, weil die Pfeile von der
+   Breite abgehen, und in Vivaldi sprang der Inhalt beim Anklicken zur Seite.
+   Verloren geht dabei nichts: Die Ladeleistung hat ihren Schieberegler, die
+   Prozentwerte tippt man, und die Pfeiltasten der Tastatur zaehlen
+   weiterhin hoch und runter. */
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.fb-limit-unit {
+  color: var(--fb-muted);
+  width: 1rem;
+}
+
+.fb-toggle-row .fb-switch,
+.fb-toggle-row .fb-limit-group {
+  flex: none;
+  min-width: 5.5rem;
+}
+
+.fb-sync-hint {
+  color: var(--fb-accent);
+  font-size: 0.75rem;
+}
+
+/* Offline-Kachel deutlich abdunkeln, damit im Dashboard auf einen Blick
+   erkennbar ist, welcher Speicher gerade weg ist. */
+.fb-card-offline {
+  background: color-mix(in srgb, var(--fb-panel) 55%, black);
+  border-color: color-mix(in srgb, var(--fb-status-offline) 35%, var(--fb-line));
+}
+
+:root[data-theme="light"] .fb-card-offline {
+  /* im Hellmodus wuerde "dunkler" den Kontrast umkehren -> stattdessen
+     zurueckgenommen/entsaettigt darstellen */
+  background: color-mix(in srgb, var(--fb-panel) 88%, var(--fb-slate-gray));
+}
+
+.fb-card-offline .fb-metrics,
+.fb-card-offline .fb-toggle-row {
+  opacity: 0.4;
+}
+
+/* Gesperrte Bedienelemente: nicht nur ausgegraut, sondern erkennbar tot. */
+.fb-card-offline .fb-switch,
+.fb-card-offline .fb-limit-input {
+  cursor: not-allowed;
+}
+
+.fb-health {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  padding: 0.5rem 1.25rem;
+  border-bottom: 1px solid var(--fb-line);
+  background: var(--fb-panel);
+  font-size: 0.78rem;
+}
+
+.fb-lamp {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Ampel-Semantik bewusst ausserhalb der Marken-Palette: hier zaehlt die
+   gelernte Bedeutung (gruen/rot) mehr als CI-Treue. Blau = keine Aussage. */
+.fb-lamp-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--fb-status-unknown);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fb-status-unknown) 25%, transparent);
+  flex: none;
+}
+
+/* Doppelte Selektoren, damit dieselben Farben sowohl in der Kopfleiste
+   (.fb-lamp-ok .fb-lamp-dot) als auch freistehend in der Gerätekachel
+   (.fb-lamp-ok-dot) gelten. */
+.fb-lamp-ok .fb-lamp-dot,
+.fb-lamp-ok-dot {
+  background: var(--fb-status-online);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fb-status-online) 25%, transparent);
+}
+
+.fb-lamp-warn .fb-lamp-dot,
+.fb-lamp-warn-dot {
+  background: var(--fb-status-offline);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fb-status-offline) 25%, transparent);
+}
+
+.fb-charge-row {
+  border-top: 1px solid var(--fb-line);
+  padding-top: 0.15rem;
+}
+
+.fb-charge-head {
+  border-top: none;
+}
+
+.fb-slider {
+  width: 100%;
+  accent-color: var(--fb-flow);
+  margin: 0.1rem 0 0.35rem;
+  /* Explizit, damit keine UA-Voreinstellung durchschlaegt (auf manchen
+     Systemen sonst ein "nicht erlaubt"-Cursor ueber dem Regler). */
+  cursor: pointer;
+}
+
+.fb-slider::-webkit-slider-thumb {
+  cursor: grab;
+}
+
+.fb-slider:active::-webkit-slider-thumb {
+  cursor: grabbing;
+}
+
+.fb-slider:disabled,
+.fb-slider:disabled::-webkit-slider-thumb {
+  cursor: not-allowed;
+}
+
+/* Stufenskala unter dem Ladeleistungs-Regler.
+   Der seitliche Einzug ist die halbe Daumenbreite: Der Daumen kann seine
+   Mitte nicht bis an den Rand der Spur fahren, sonst staende die erste Marke
+   links neben der Stufe, die sie bezeichnet. */
+.fb-slider-scale {
+  display: flex;
+  justify-content: space-between;
+  margin: -0.25rem 0.5rem 0.9rem;
+  position: relative;
+}
+
+.fb-slider-tick {
+  width: 1px;
+  height: 4px;
+  background: var(--fb-line);
+  position: relative;
+}
+
+.fb-slider-tick-label {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.62rem;
+  color: var(--fb-muted);
+  white-space: nowrap;
+}
+
+/* Wert, den das Geraet meldet, aber nicht annimmt. Bewusst OHNE Rahmen und
+   Knopf-Optik: Er soll sich nicht anfassbar anfuehlen. */
+.fb-readonly-value {
+  color: var(--fb-muted);
+  font-variant-numeric: tabular-nums;
+  padding: 0.25rem 0.1rem;
+}
+
+/* Quittung der REST-Abfrage - rechtsbuendig unter dem Knopf, der sie
+   ausgeloest hat. */
+.fb-refresh-done {
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  text-align: right;
+}
+
+.fb-charge-note {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+}
+
+.fb-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.75rem 0 0.25rem;
+  border-bottom: 1px solid var(--fb-line);
+}
+
+.fb-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--fb-muted);
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-family: inherit;
+}
+
+.fb-tab:hover {
+  color: var(--fb-text);
+}
+
+.fb-tab-active {
+  color: var(--fb-text);
+  border-bottom-color: var(--fb-flow);
+}
+
+.fb-module-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.fb-module-table tr:not(:last-child) td {
+  border-bottom: 1px solid var(--fb-line);
+}
+
+.fb-module-key {
+  color: var(--fb-muted);
+  padding: 0.3rem 0.5rem 0.3rem 0;
+  font-family: "Cascadia Code", Consolas, monospace;
+}
+
+.fb-module-value {
+  text-align: right;
+  padding: 0.3rem 0 0.3rem 0.5rem;
+  font-weight: 600;
+  color: var(--fb-value);
+  white-space: nowrap;
+}
+
+.fb-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.fb-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.fb-card-header .fb-card-title {
+  margin: 0;
+}
+
+.fb-refresh {
+  font-size: 0.72rem;
+  padding: 0.25rem 0.55rem;
+  flex: none;
+  /* Gleiches Gruen wie die Ladezustands-Kurve. Dunkle Schrift darauf, weil
+     Weiss auf diesem hellen Gruen nur ~2,5:1 Kontrast haette. */
+  background: var(--fb-status-online);
+  border-color: var(--fb-status-online);
+  color: var(--fb-polar-navy);
+  font-weight: 600;
+}
+
+.fb-refresh:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fb-status-online) 85%, black);
+  border-color: color-mix(in srgb, var(--fb-status-online) 85%, black);
+}
+
+.fb-lamp-label {
+  color: var(--fb-muted);
+}
+
+.fb-lamp-detail {
+  color: var(--fb-text);
+}
+
+.fb-lamp-off .fb-lamp-detail,
+.fb-lamp-unknown .fb-lamp-detail {
+  color: var(--fb-muted);
+}
+
+.fb-offline-badge {
+  /* gleiche Bedeutung wie das rote Laempchen -> gleiche Farbe */
+  background: var(--fb-status-offline);
+  color: var(--fb-arctic-white);
+  border-radius: 5px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.7rem;
+  margin-left: 0.6rem;
+  letter-spacing: 0;
+  text-transform: none;
+  vertical-align: middle;
+}
+
+/* Die Dauer der Funkstille steht NEBEN dem Offline-Schild, nicht darin:
+   "Offline" ist die Aussage, die Dauer nur ihre Einordnung. Deshalb ohne
+   Fuellung und zurueckgenommen - sonst konkurrieren zwei Schilder um dieselbe
+   Aufmerksamkeit. Sie erscheint auch ohne Offline-Schild, naemlich in der
+   Stunde davor, solange der Zustand noch "unbekannt" ist. */
+.fb-silence-badge {
+  color: var(--fb-muted);
+  font-size: 0.7rem;
+  font-weight: 400;
+  margin-left: 0.5rem;
+  letter-spacing: 0;
+  text-transform: none;
+  vertical-align: middle;
+}
+
+/* ---------------------------------------------------------- Energiebilanz */
+/* Sitzt unter dem Verlauf und fuellt den Platz, der sonst leer bliebe.
+   Zeigt, was zwischen Eingang und Batterie verloren geht - der Wert, der bei
+   niedriger Ladeleistung dramatisch einbricht und den sonst niemand anzeigt. */
+.fb-energy {
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--fb-line);
+}
+
+.fb-energy-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.fb-energy-title {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--fb-muted);
+  font-weight: 600;
+}
+
+.fb-energy-mode {
+  font-size: 0.72rem;
+  color: var(--fb-muted);
+}
+
+.fb-energy-mode-in {
+  color: var(--fb-status-online);
+}
+
+.fb-energy-flow {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+}
+
+.fb-energy-node-value {
+  font-size: 1.15rem;
+  font-weight: 650;
+  color: var(--fb-value);
+  line-height: 1.15;
+}
+
+.fb-energy-node-label {
+  font-size: 0.7rem;
+  color: var(--fb-muted);
+}
+
+/* Der Pfeil traegt die Verlustangabe - genau dort, wo die Energie abhanden
+   kommt, statt sie als weitere Zahl daneben zu stellen. */
+.fb-energy-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 3.5rem;
+}
+
+.fb-energy-loss {
+  font-size: 0.7rem;
+  color: var(--fb-accent);
+  white-space: nowrap;
+}
+
+.fb-energy-arrow-line {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, var(--fb-flow), var(--fb-accent));
+  position: relative;
+}
+
+.fb-energy-arrow-line::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: -3px;
+  border-left: 5px solid var(--fb-accent);
+  border-top: 3.5px solid transparent;
+  border-bottom: 3.5px solid transparent;
+}
+
+.fb-energy-eff {
+  text-align: right;
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--fb-line);
+}
+
+.fb-energy-eff-value {
+  font-size: 1.15rem;
+  font-weight: 650;
+  color: var(--fb-status-online);
+  line-height: 1.15;
+}
+
+.fb-energy-eff-bad {
+  color: var(--fb-accent);
+}
+
+.fb-energy-hint {
+  margin: 0.55rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--fb-muted);
+  border-left: 2px solid var(--fb-accent);
+  padding-left: 0.55rem;
+}
+
+.fb-energy-idle {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+}
+
+/* ------------------------------------------------- Statistik zum Zeitraum */
+.fb-stats {
+  margin-top: 0.85rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--fb-line);
+}
+
+.fb-stats-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--fb-muted);
+  font-weight: 600;
+}
+
+.fb-stats-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.22rem 0.9rem;
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+}
+
+.fb-stats-grid dt {
+  color: var(--fb-muted);
+}
+
+.fb-stats-grid dd {
+  margin: 0;
+  color: var(--fb-text);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 560px) {
+  .fb-energy-flow {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 0.6rem;
+  }
+  .fb-energy-eff {
+    border-left: none;
+    padding-left: 0;
+    text-align: left;
+  }
+}
+
+/* ------------------------------------------------- Update-Anzeige (Header) */
+/* Orange nur beim tatsaechlich verfuegbaren Update - waere sie immer bunt,
+   wuerde man sie nach zwei Tagen nicht mehr sehen. */
+.fb-update {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--fb-line);
+  border-radius: 5px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  /* Button-Eigenheiten zurücksetzen: Die Anzeige ist jetzt anklickbar
+     (startet die Prüfung), soll aber weiterhin wie eine Anzeige aussehen
+     und nicht wie ein zweiter Knopf neben "Einstellungen". */
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Dass es klickbar ist, darf man nicht raten müssen - beim Zeigen wird der
+   Rahmen deutlicher. Kein Farbwechsel: der Rahmen trägt hier den Zustand
+   (orange = Update), den darf ein Hover nicht überschreiben. */
+.fb-update:hover {
+  border-color: var(--fb-flow);
+}
+
+.fb-update:disabled {
+  cursor: progress;
+}
+
+/* Rückmeldung nach dem Klick.
+   Ohne sie wäre der häufigste Fall stumm: Wer "Up-to-date" ist und prüft,
+   bekommt wieder "Up-to-date" - und hält den Knopf für kaputt. Genau das
+   war am 16.08.2026 schon bei "Jetzt abfragen" der Fall, dort mit einer
+   Bestätigung gelöst. Hier reicht ein kurzes Aufleuchten: Die Aussage steht
+   ja schon da, es fehlte nur das Zeichen, dass sie frisch ist. */
+@keyframes fb-update-quittung {
+  /* Erst AUFBLITZEN, dann verlaufen.
+     Die erste Fassung ging von Breite 0 auf durchsichtig - der Ring war
+     damit zu keinem Zeitpunkt sichtbar, und Dirk sah beim Klick
+     erwartungsgemäß nichts. Eine Animation muss irgendwann etwas ZEIGEN;
+     zwischen "unsichtbar" und "durchsichtig" liegt nichts.
+     Deshalb jetzt drei Stufen: der Ring ist bei 12 % voll da und blasst
+     über die restliche Zeit nach außen weg. */
+  0% { box-shadow: 0 0 0 0 var(--fb-flow); }
+  12% { box-shadow: 0 0 0 4px var(--fb-flow); }
+  100% { box-shadow: 0 0 0 11px rgba(10, 107, 255, 0); }
+}
+
+.fb-update-geprueft {
+  animation: fb-update-quittung 1100ms ease-out;
+}
+
+/* Wer Bewegung abgestellt hat, bekommt die Quittung trotzdem - nur ohne
+   Animation, als kurz stehender Ring.
+   NICHT über border-color: Das war die erste Fassung, und sie war wertlos.
+   Der Hover färbt den Rahmen bereits blau, und nach einem Klick steht der
+   Zeiger noch auf dem Knopf - die Quittung wäre also mit dem Hover identisch
+   gewesen und damit unsichtbar. Der Ring liegt AUSSERHALB des Rahmens und
+   ist deshalb auch dann zu sehen, wenn der Rahmen schon leuchtet. */
+@media (prefers-reduced-motion: reduce) {
+  .fb-update-geprueft {
+    animation: none;
+    box-shadow: 0 0 0 3px var(--fb-flow);
+  }
+}
+
+.fb-update-current {
+  color: var(--fb-muted);
+}
+
+/* Noch nicht geprueft: bewusst unauffaellig. Es ist keine Warnung, sondern
+   die ehrliche Aussage, dass keine Quelle eingerichtet ist. */
+.fb-update-unknown {
+  color: var(--fb-muted);
+  opacity: 0.75;
+}
+
+.fb-update-update {
+  background: var(--fb-accent);
+  border-color: var(--fb-accent);
+  color: #1A0E00;
+  font-weight: 600;
+}
+
+.fb-toggle-icon {
+  min-width: 2rem;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+/* Version rechtsbuendig am Ende der Statuszeile. */
+.fb-health-version {
+  margin-left: auto;
+  color: var(--fb-muted);
+  font-variant-numeric: tabular-nums;
+  align-self: center;
+}
+
+/* ------------------------------------------------------ Dialoge (Über/Hilfe) */
+.fb-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3rem 1rem;
+  overflow-y: auto;
+  z-index: 50;
+}
+
+.fb-modal {
+  position: relative;
+  background: var(--fb-panel);
+  border: 1px solid var(--fb-line);
+  border-radius: 8px;
+  max-width: 46rem;
+  width: 100%;
+  padding: 1.6rem 1.8rem 1.8rem;
+}
+
+.fb-modal-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.7rem;
+  background: transparent;
+  border: none;
+  color: var(--fb-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+}
+
+.fb-modal-close:hover {
+  color: var(--fb-text);
+}
+
+.fb-modal-brand {
+  border-bottom: 1px solid var(--fb-line);
+  padding-bottom: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+/* Im Dialog darf die Marke groesser sein als in der Kopfzeile - eine Angabe
+   genuegt, alles andere haengt daran. */
+.fb-modal-brand .fb-logo {
+  font-size: 1.9rem;
+}
+
+.fb-modal-subtitle {
+  margin: 0.45rem 0 0;
+  color: var(--fb-muted);
+  font-size: 0.92rem;
+}
+
+.fb-modal-version {
+  margin: 0 0 1.1rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--fb-value);
+  font-weight: 600;
+}
+
+.fb-modal-text {
+  margin: 0 0 0.85rem;
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+.fb-modal-footer {
+  margin-top: 1.4rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--fb-line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.fb-modal-copy {
+  margin: 0;
+  color: var(--fb-muted);
+  font-size: 0.82rem;
+}
+
+.fb-modal-link {
+  color: var(--fb-flow-soft);
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+
+.fb-modal-link:hover {
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------- Hilfe */
+.fb-help-section {
+  margin-bottom: 1.4rem;
+}
+
+.fb-help-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--fb-flow-soft);
+  font-weight: 600;
+}
+
+.fb-help-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fb-help-list li {
+  line-height: 1.6;
+  font-size: 0.88rem;
+}
+
+.fb-help-list li::marker {
+  color: var(--fb-flow);
+}
+
+@media (max-width: 560px) {
+  .fb-modal {
+    padding: 1.2rem 1rem 1.4rem;
+  }
+  .fb-modal-backdrop {
+    padding: 1.5rem 0.5rem;
+  }
+}
+
+/* ------------------------------------------------------------- Anmeldung */
+.fb-login {
+  display: flex;
+  justify-content: center;
+  padding-top: 2rem;
+}
+
+.fb-login-card {
+  max-width: 26rem;
+  width: 100%;
+}
+
+.fb-login-card h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.fb-login-note {
+  margin: 0.9rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  border-left: 2px solid var(--fb-accent);
+  padding-left: 0.55rem;
+}
+
+/* --------------------------------------------------------------- Diagnose */
+.fb-diag-state {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  word-break: break-all;
+}
+
+/* Der Datenschutz-Hinweis steht bewusst direkt am Download-Knopf: die Datei
+   geht per E-Mail raus, da soll niemand raten muessen, was drinsteht. */
+.fb-diag-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  border-left: 2px solid var(--fb-flow);
+  padding-left: 0.55rem;
+}
+
+/* Der Download ist ein <a>, soll aber wie die Knoepfe daneben aussehen. */
+a.fb-toggle {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ---------------------------------------------------- Einstellungen-Seite */
+/* Drei getrennte Kacheln statt einer langen. Vorher hingen Passwort und
+   Diagnose unten in der Einrichtungs-Kachel und sahen aus, als gehoerten
+   sie dazu. */
+.fb-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 1180px;
+}
+
+/* Links die Einrichtung, rechts Passwort und Diagnose gestapelt.
+   Feste Spalten statt auto-fit: bei auto-fit wanderten die Kacheln beim
+   Ziehen des Fensters staendig hin und her (dasselbe Problem wie seinerzeit
+   bei den Messwert-Kacheln). */
+.fb-settings-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.fb-settings-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Unterhalb dieser Breite waeren die Formularfelder nebeneinander zu schmal
+   zum Lesen - dann wieder untereinander. */
+@media (max-width: 900px) {
+  .fb-settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Klebt oben fest: die Seite ist lang geworden, und der Rueckweg soll aus
+   jeder Kachel gleich weit weg sein. */
+.fb-settings-head {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0 0.7rem;
+  background: var(--fb-bg);
+  border-bottom: 1px solid var(--fb-line);
+}
+
+.fb-settings-title {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fb-muted);
+  font-weight: 600;
+}
+
+/* Die Kacheln der Einstellungsseite duerfen breiter als die Standard-420px
+   sein - sie enthalten Formularzeilen, keine Messwerte. */
+.fb-settings .fb-card {
+  max-width: none;
+  width: 100%;
+}
+
+/* --------------------------------------------------- Autovervollstaendigung */
+/* Chrome/Edge malen automatisch ausgefuellte Felder mit eigenem hellen
+   Hintergrund - im Dark-Theme sieht das aus, als waere etwas kaputt.
+   Der Hintergrund laesst sich nicht direkt setzen, deshalb der Umweg ueber
+   einen sehr grossen inneren Schatten. Die absurd lange transition haelt ihn
+   auch beim Fokuswechsel fest, sonst blitzt kurz wieder Gelb auf. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--fb-text);
+  -webkit-box-shadow: 0 0 0 1000px var(--fb-bg) inset;
+  box-shadow: 0 0 0 1000px var(--fb-bg) inset;
+  caret-color: var(--fb-text);
+  transition: background-color 100000s ease-in-out 0s;
+}
+
+/* ------------------------------------------------------------- Topic-Export */
+.fb-export-sub {
+  margin: 1.1rem 0 0.3rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--fb-flow-soft);
+}
+
+/* Nummerierte Schritte, weil die Reihenfolge hier wirklich zaehlt: die CSV
+   verweist auf Profile aus dem XML. */
+/* Gitter statt Liste: so bekommen beide Knoepfe die Breite des breiteren
+   ("1. Payloadeditor (XML)"), statt jeder seine eigene nach Textlaenge.
+   `display: contents` an den li haengt Knopf und Hinweis direkt ins Gitter. */
+.fb-export-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.fb-export-steps li {
+  display: contents;
+}
+
+/* Beschriftung mittig, weil die Knoepfe jetzt breiter als ihr Text sind. */
+.fb-export-steps a.fb-toggle {
+  justify-content: center;
+}
+
+.fb-export-note {
+  margin: 0.8rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  border-left: 2px solid var(--fb-accent);
+  padding-left: 0.55rem;
+}
+
+/* Kontrollkaestchen im Export - es gab bislang keines im Projekt. */
+.fb-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.8rem 0 0.2rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.fb-check input {
+  accent-color: var(--fb-flow);
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+.fb-export-modhint {
+  margin: 0 0 0.2rem 1.5rem;
+  font-size: 0.73rem;
+  line-height: 1.45;
+}
+
+/* Allgemein und EisBaer nebeneinander - haelt die Kachel kurz.
+   Die erste Spalte traegt nur einen Knopf, die zweite drei plus Hinweise;
+   deshalb keine gleiche Breite, sondern nach Inhalt. */
+.fb-export-cols {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.4rem 1.5rem;
+  align-items: start;
+}
+
+.fb-export-cols .fb-export-sub {
+  margin-top: 0.9rem;
+}
+
+/* Wird es zu eng, stapeln sie wieder - zwei Knopfspalten nebeneinander
+   waeren sonst beide zu schmal fuer ihre Beschriftung. */
+@media (max-width: 620px) {
+  .fb-export-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Das ZIP fasst die beiden Einzeldateien zusammen und steht deshalb unter
+   ihnen - abgesetzt, damit es nicht wie ein dritter Schritt wirkt. */
+/* Beide Spalten sollen auf derselben Hoehe beginnen. .fb-actions bringt
+   sonst 1.25rem Abstand mit, waehrend die Schrittliste daneben bei 0 anfaengt -
+   der linke Knopf sass dadurch tiefer als "1. Payloadeditor". */
+.fb-export-cols .fb-actions {
+  margin-top: 0;
+}
+
+/* Das ZIP braucht seinen Absatz aber zurueck - hoehere Spezifitaet noetig,
+   sonst gewinnt die Regel darueber. */
+.fb-export-cols .fb-export-zip {
+  margin-top: 0.65rem;
+}
+
+/* Fähigkeitsliste im Über-Dialog. Enger gesetzt als die Hilfe-Listen -
+   es sind Stichpunkte, keine Erklärungen. */
+.fb-about-list {
+  margin: 0 0 1.1rem;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.fb-about-list li {
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.fb-about-list li::marker {
+  color: var(--fb-flow);
+}
+
+/* Datenordner nicht beschreibbar -------------------------------------------
+   Bewusst in Signalorange gerahmt und nicht als beilaeufiger Hinweis: Ohne
+   Behebung geht hier gar nichts weiter, und der Nutzer sieht sonst nur ein
+   Anmeldefenster, das ihn nicht einlaesst. */
+.fb-storage-error {
+  border-color: var(--fb-accent);
+  max-width: 46rem;
+}
+
+.fb-storage-error h2 {
+  color: var(--fb-accent);
+}
+
+.fb-storage-detail,
+.fb-storage-cmd {
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.86rem;
+  background: var(--fb-bg);
+  border: 1px solid var(--fb-line);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  margin: 0 0 1rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.fb-storage-cmd {
+  /* Der Befehl zum Kopieren - der wird markiert, nicht abgetippt. */
+  user-select: all;
+  color: var(--fb-value);
+}
+
+/* Erklaerender Text unter einem Eingabefeld. Bewusst schmal gehalten -
+   ein Hinweis, der breiter laeuft als das Feld, liest sich wie ein Fehler. */
+/* Erklaerender Text unter einem Eingabefeld. Traegt denselben Balken wie die
+   Hinweise bei Diagnose und Feldinventar (.fb-diag-note) - gleiche Farbe,
+   gleiche Staerke, gleicher Abstand. Ohne ihn stand der Text als einziger
+   Hinweis der Oberflaeche nackt in der Spalte. */
+.fb-field-hint {
+  font-size: 0.85rem;
+  margin: -0.4rem 0 1rem;
+  max-width: 42rem;
+  border-left: 2px solid var(--fb-flow);
+  padding-left: 0.55rem;
+}
+
+/* ----------------------------------------------------- Einsende-Link */
+/* Der Link steht ABGESETZT unter den Hinweisen, nicht neben dem
+   Herunterladen-Knopf: Nebeneinander läse es sich wie eine Alternative
+   ("herunterladen ODER mailen"), dabei ist es die Fortsetzung - erst
+   herunterladen, DANN mailen. Der Abstand oben macht die Reihenfolge sichtbar. */
+.fb-mail {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--fb-line);
+}
+
+/* Auswählbar, weil ein mailto ohne eingerichtetes Mailprogramm nichts tut -
+   dann muss man die Adresse kopieren können. */
+.fb-mail-address {
+  font-family: var(--fb-mono, monospace);
+  user-select: all;
+  color: var(--fb-text);
+}

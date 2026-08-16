@@ -1,0 +1,61 @@
+# FlowBridge auf der Synology (Container Manager -> Projekt).
+#
+# Holt das fertige Abbild von Docker Hub. Die NAS soll nur starten, nicht
+# bauen.
+#
+# Update spaeter:  docker compose pull && docker compose up -d
+#
+# Zum Bauen aus dem Quellcode gibt es daneben compose.build.yaml.
+
+services:
+  flowbridge:
+    image: cheetahlab/flowbridge:latest
+    container_name: flowbridge
+    restart: unless-stopped
+
+    ports:
+      # Aussen 8081, weil 8080 auf der DS oft schon belegt ist.
+      - "8081:8080"
+
+    environment:
+      FLOWBRIDGE_CONFIG: /config/config.yaml
+      TZ: Europe/Berlin
+      # FLOWBRIDGE_PASSWORD setzt das Zugriffs-Passwort beim ALLERERSTEN Start.
+      # Damit gibt es kein Zeitfenster, in dem FlowBridge laeuft und noch gar
+      # kein Passwort vergeben ist. Ein bereits gesetztes Passwort wird davon
+      # NICHT ueberschrieben - die Zeile kann danach wieder raus.
+      # FLOWBRIDGE_PASSWORD: "hier-ein-gutes-passwort"
+
+    volumes:
+      # Verzeichnis-Mount (nicht Datei): FlowBridge legt hier config.yaml an
+      # und schreibt bei eingeschalteter Diagnose flowbridge.log daneben.
+      #
+      # Bewusst ein UNTERordner des Projektverzeichnisses: Der Container
+      # Manager legt seine eigene docker-compose.yml im Projektordner ab.
+      # Zeigte der Mount direkt dorthin, laege sie mitten in der
+      # Konfiguration - und ein "Projekt loeschen" naehme die Zugangsdaten
+      # gleich mit.
+      - /volume1/docker/flowbridge/data:/config
+
+    healthcheck:
+      # /api/auth/state ist der einzige Endpunkt, der ohne Anmeldung
+      # antwortet - alles andere liefert korrekt 401 und waere als
+      # Lebenszeichen unbrauchbar. Python statt curl, weil das schlanke
+      # Abbild kein curl mitbringt.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/auth/state', timeout=5)"
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+    # FlowBridge meldet sich beim Beenden sauber vom Broker ab (Last-Will
+    # waere sonst der einzige Hinweis) - dafuer etwas Zeit lassen.
+    stop_grace_period: 20s

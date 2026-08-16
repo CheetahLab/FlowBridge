@@ -1,0 +1,21 @@
+<svg width="1600" height="620" viewBox="0 0 1600 620" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">FlowBridge Protocol Rail dark wordmark</title>
+  <desc id="desc">FlowBridge split-flow wordmark in the FlowBridge dark brand colors.</desc>
+  <rect width="1600" height="620" fill="#0B1324"/>
+  <path d="M0 64H1600M0 128H1600M0 192H1600M0 256H1600M0 320H1600M0 384H1600M0 448H1600M0 512H1600M0 576H1600M64 0V620M128 0V620M192 0V620M256 0V620M320 0V620M384 0V620M448 0V620M512 0V620M576 0V620M640 0V620M704 0V620M768 0V620M832 0V620M896 0V620M960 0V620M1024 0V620M1088 0V620M1152 0V620M1216 0V620M1280 0V620M1344 0V620M1408 0V620M1472 0V620M1536 0V620" stroke="#13294A" stroke-width="1"/>
+  <circle cx="1300" cy="130" r="420" fill="#0A6BFF" opacity=".18"/>
+  <circle cx="150" cy="620" r="320" fill="#FF7A00" opacity=".10"/>
+  <rect x="96" y="96" width="1408" height="428" rx="18" fill="#071224" stroke="#243A5E" stroke-width="2"/>
+  <text x="142" y="159" fill="#0A6BFF" font-family="Cascadia Code, Consolas, monospace" font-size="22" font-weight="500">FB://PROTOCOL-RAIL</text>
+  <text x="1308" y="159" fill="#7DB7FF" font-family="Cascadia Code, Consolas, monospace" font-size="22" font-weight="500">LINKED</text>
+  <text x="196" y="407" fill="#F7F9FC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="126" font-weight="650" letter-spacing="0">Flow</text>
+  <text x="640" y="407" fill="#F7F9FC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="126" font-weight="650" letter-spacing="0">Bridge</text>
+  <rect x="550" y="365" width="68" height="36" rx="18" fill="#102440" stroke="#243A5E" stroke-width="2"/>
+  <path d="M567 383H601" stroke="#7DB7FF" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="570" cy="383" r="6" fill="#0A6BFF"/>
+  <circle cx="584" cy="383" r="6" fill="#7DB7FF"/>
+  <circle cx="602" cy="383" r="6" fill="#FF7A00"/>
+  <path d="M196 420H1190" stroke="#243A5E" stroke-width="2"/>
+  <text x="196" y="474" fill="#A9B8D0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="28" font-weight="400">MQTT bridge for portable power stations</text>
+  <text x="196" y="512" fill="#88A0C0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="400">Docker · EcoFlow MQTT · Local Broker · Visu</text>
+</svg>
