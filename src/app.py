@@ -1608,6 +1608,34 @@ async def _execute_command(sn: str, property_name: str, value: str) -> dict:
         )
 
     client = EcoFlowClient(eco["access_key"], eco["secret_key"])
+
+    # Manche Befehle muessen ein VOLLSTAENDIGES Param-Set schicken und nehmen
+    # die ungeaenderten Felder aus dem zuletzt gelesenen Stand (s.
+    # commands_river2._ac_out_cfg). Direkt nach dem Start ist der noch leer -
+    # der erste Push braucht ein paar Sekunden. Frueher gingen dann geratene
+    # Vorgabewerte mit hinaus und verstellten X-Boost, Spannung und Frequenz
+    # ungefragt; heute bricht der Befehlsbauer lieber ab.
+    #
+    # Damit daraus kein "dann warte halt" wird, holen wir den Stand hier
+    # einmalig per REST nach. Nur wenn wirklich nichts da ist - im Normalfall
+    # kostet das keinen zusaetzlichen Aufruf.
+    if sn not in _state:
+        try:
+            # setdefault().update() wie in der Aufsichtsschleife (s. dort):
+            # der Zwischenspeicher wird ergaenzt, nicht ersetzt - sonst ginge
+            # ein Push verloren, der zwischendurch hereinkam.
+            _quota_cache.setdefault(sn, {}).update(await client.get_quota_all(sn))
+            _publish_state(sn)
+            logger.info("Zustand fuer %s vor dem Befehl per REST nachgeholt.", sn)
+        except Exception as exc:
+            # Bewusst ALLE Fehler, nicht nur die der EcoFlow-Schnittstelle:
+            # Dieses Nachholen ist eine Bequemlichkeit. Befehle ohne
+            # vollstaendiges Param-Set (12-V-Ausgang, Ladelimit, Ladepause)
+            # brauchen den Stand gar nicht und muessen weiter funktionieren,
+            # auch wenn hier irgendetwas Unerwartetes schiefgeht. Die Befehle,
+            # die ihn brauchen, melden sich gleich selbst mit Klartext.
+            logger.warning("Zustand fuer %s nicht nachholbar: %s", sn, exc)
+
     data = await modul.apply_command(client, sn, property_name, value, _state.get(sn))
 
     # Diese beiden Sollwerte melden manche Modelle nicht zurueck - selbst

@@ -162,7 +162,7 @@ matching image on Docker Hub.
 | `src/inventar.py` | field inventory |
 | `src/exporters.py`, `src/ha_discovery.py` | EisBär export, Home Assistant discovery |
 | `frontend/` | React + Vite + TypeScript |
-| `tests/` | 341 tests, `pytest` |
+| `tests/` | 346 tests, `pytest` |
 
 ```bash
 pip install -r requirements.txt

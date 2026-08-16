@@ -98,12 +98,39 @@ def _ac_out_cfg(current: dict, **overrides) -> dict:
     Achtung Kodierungs-Asymmetrie: out_freq ist beim SCHREIBEN ein Enum
     (1 = 50Hz, 2 = 60Hz), beim LESEN meldet mppt.cfgAcOutFreq dagegen die
     echten Hertz (50/60). Deshalb hier zurueckuebersetzen.
+
+    KEINE VORGABEWERTE (16.08.2026). Bis dahin standen hier Rueckfallwerte:
+    fehlte der Stand, ging `xboost: 0` mit hinaus. Wer direkt nach einem
+    Neustart den AC-Ausgang einschaltete - da ist der Stand noch leer, der
+    erste Push braucht ein paar Sekunden - schaltete damit stillschweigend
+    X-Boost aus. Ebenso waeren 230 V / 50 Hz gesetzt worden, auch bei einem
+    Geraet, das auf 60 Hz stand.
+
+    Das ist die schlimmste Sorte Fehler in diesem Modul: Der Aufrufer bat um
+    genau ein Feld, drei weitere aenderten sich ungefragt mit, und EcoFlow
+    quittierte mit Erfolg. Deshalb wird jetzt lieber abgebrochen. Der Aufrufer
+    (app.py) besorgt den Stand vorher per REST; kommt auch der nicht, ist eine
+    lesbare Meldung allemal besser als ein stiller Eingriff.
     """
-    freq_hz = current.get("ac_output_freq_hz", 50)
+    fehlend = [
+        feld
+        for feld in ("ac_output_enabled", "xboost_enabled", "ac_output_voltage",
+                     "ac_output_freq_hz")
+        if current.get(feld) is None
+    ]
+    if fehlend:
+        raise CommandError(
+            "Zustand des AC-Ausgangs noch nicht bekannt ("
+            + ", ".join(fehlend)
+            + ") – ein paar Sekunden warten und noch einmal versuchen. "
+            "Ohne ihn liesse sich der Befehl nur mit geratenen Werten senden, "
+            "und das wuerde X-Boost, Spannung oder Frequenz mitverstellen."
+        )
+    freq_hz = current["ac_output_freq_hz"]
     params = {
-        "enabled": int(current.get("ac_output_enabled", 0)),
-        "xboost": int(current.get("xboost_enabled", 0)),
-        "out_voltage": int(current.get("ac_output_voltage", 230)),
+        "enabled": int(current["ac_output_enabled"]),
+        "xboost": int(current["xboost_enabled"]),
+        "out_voltage": int(current["ac_output_voltage"]),
         "out_freq": 2 if int(freq_hz) == 60 else 1,
     }
     params.update(overrides)

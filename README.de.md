@@ -163,7 +163,7 @@ und als unveränderliche Marke am zugehörigen Abbild auf Docker Hub.
 | `src/inventar.py` | Feldinventar |
 | `src/exporters.py`, `src/ha_discovery.py` | EisBär-Export, Home-Assistant-Discovery |
 | `frontend/` | React + Vite + TypeScript |
-| `tests/` | 341 Tests, `pytest` |
+| `tests/` | 346 Tests, `pytest` |
 
 ```bash
 pip install -r requirements.txt

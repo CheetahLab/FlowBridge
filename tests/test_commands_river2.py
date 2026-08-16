@@ -95,17 +95,52 @@ def test_ungueltiger_schaltwert_wird_abgelehnt():
         _sende("ac_charging_enabled", "vielleicht")
 
 
+# Vollstaendiger AC-Stand, wie ihn normalize_quota liefert. Alle vier Felder
+# muessen dastehen - unvollstaendig ist seit 16.08.2026 ein Fehler, nicht mehr
+# ein Fall fuer Vorgabewerte (s. unten).
+AC_STAND = {
+    "ac_output_enabled": 1,
+    "xboost_enabled": 0,
+    "ac_output_voltage": 230,
+    "ac_output_freq_hz": 50,
+}
+
+
 def test_ac_ausgang_sendet_alle_vier_felder():
     """acOutCfg wirkt nur vollständig - Teil-Updates ignoriert das Gerät."""
-    a = _sende("xboost_enabled", "on",
-               {"ac_output_enabled": 1, "ac_output_voltage": 230, "ac_output_freq_hz": 50})
+    a = _sende("xboost_enabled", "on", AC_STAND)
     assert a["params"] == {"enabled": 1, "xboost": 1, "out_voltage": 230, "out_freq": 1}
 
 
 def test_ac_frequenz_wird_beim_schreiben_zum_enum():
     """Lesen liefert Hertz (50/60), Schreiben erwartet 1/2."""
-    a = _sende("xboost_enabled", "on", {"ac_output_freq_hz": 60})
+    a = _sende("xboost_enabled", "on", {**AC_STAND, "ac_output_freq_hz": 60})
     assert a["params"]["out_freq"] == 2
+
+
+@pytest.mark.parametrize("fehlt", sorted(AC_STAND))
+def test_unvollstaendiger_ac_stand_wird_abgelehnt(fehlt):
+    """Am 16.08.2026 im Feld aufgeschlagen: Dirk hatte den Container neu
+    erstellt und den AC-Ausgang eingeschaltet, bevor der erste Push da war.
+
+    Damals standen in _ac_out_cfg Rückfallwerte. Der Stand war leer, also ging
+    `xboost: 0` mit hinaus - **X-Boost wurde stillschweigend ausgeschaltet**,
+    obwohl niemand danach gefragt hatte. Ebenso wären 230 V / 50 Hz gesetzt
+    worden. EcoFlow quittierte mit Erfolg.
+
+    Ein Befehl darf nur das ändern, wonach gefragt wurde. Fehlt auch nur eines
+    der vier Felder, ist Abbrechen mit lesbarer Meldung die einzige ehrliche
+    Antwort - raten heißt hier, drei fremde Einstellungen zu überschreiben."""
+    unvollstaendig = {k: v for k, v in AC_STAND.items() if k != fehlt}
+    with pytest.raises(cmd.CommandError) as fehler:
+        _sende("xboost_enabled", "on", unvollstaendig)
+    assert fehlt in str(fehler.value)
+
+
+def test_leerer_stand_verstellt_nicht_stillschweigend():
+    """Der Fall aus dem Feld in Reinform: gar kein Stand bekannt."""
+    with pytest.raises(cmd.CommandError):
+        _sende("ac_output_enabled", "on", {})
 
 
 @pytest.mark.parametrize("wert,erwartet", [
