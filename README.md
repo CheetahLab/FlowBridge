@@ -133,9 +133,11 @@ Einzelheiten in [`docs/quota-fields-river2.md`](docs/quota-fields-river2.md).
 | [MQTT-Topics](docs/mqtt-topics.md) | vollständige Topic-Liste |
 | [Feldabgleich River 2 Pro](docs/quota-fields-river2.md) | was die Schnittstelle liefert — und was nicht |
 
-Dieser Stand ist als **ein** Commit veröffentlicht — die vorangegangene
-Entwicklung lief nicht öffentlich. Jede neue Fassung kommt als weiterer
-Commit dazu.
+Dieses Repository ist ein **Spiegel**, kein Arbeitsverzeichnis: Jede
+veröffentlichte Fassung steht hier als ein Commit, die eigentliche Entwicklung
+läuft woanders. Was sich zwischen zwei Fassungen geändert hat, zeigt deshalb
+der Vergleich zweier Commits — die Nummer dazu steht in [`VERSION`](VERSION)
+und als unveränderliche Marke am zugehörigen Abbild auf Docker Hub.
 
 ## Lokale Entwicklung
 
