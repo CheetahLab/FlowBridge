@@ -1,0 +1,18 @@
+# Leere Issues sind ausgeschaltet: Ohne Modell und Fassung ist einer Meldung
+# nicht nachzugehen, und beides zu erfragen kostet einen Tag pro Runde.
+# Wer eine Frage statt eines Fehlers hat, wird unten weitergeleitet.
+blank_issues_enabled: false
+
+contact_links:
+  - name: Frage statt Fehler / Question rather than a bug
+    url: https://github.com/CheetahLab/FlowBridge/discussions
+    about: >-
+      Einrichtung, Broker, Home Assistant, EisBär-Export — alles, was kein
+      Fehler ist, passt besser in die Diskussionen. / Setup and usage questions
+      belong in Discussions.
+
+  - name: Sicherheitslücke melden / Report a security issue
+    url: mailto:flowbridge@hofherweb.de
+    about: >-
+      Bitte NICHT als öffentliches Issue, sondern per E-Mail. / Please report
+      privately by e-mail instead of opening a public issue.

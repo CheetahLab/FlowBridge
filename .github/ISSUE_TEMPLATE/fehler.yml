@@ -1,0 +1,99 @@
+name: Fehler melden / Report a bug
+description: Etwas funktioniert nicht wie erwartet. / Something does not work as expected.
+labels: ["fehler"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Deutsch oder Englisch, beides ist willkommen. / German or English, both are fine.
+
+        **Der schnellste Weg zu einer Antwort ist das Diagnose-Paket** — es
+        enthält Fassung, Zustand aller drei Verbindungen und das Protokoll.
+        Schlüssel und Passwörter sind darin unkenntlich gemacht, Seriennummer
+        und Kontokennung stehen als `<GERAET-1>` und `<KONTO>` drin.
+
+        Einstellungen → *Diagnose* → Protokoll einschalten → Fehler nachstellen
+        → Paket herunterladen.
+
+  - type: dropdown
+    id: modell
+    attributes:
+      label: Modell / Model
+      description: Welcher Speicher? / Which power station?
+      options:
+        - RIVER 2 Pro
+        - RIVER 2 / RIVER 2 Max
+        - DELTA 2
+        - DELTA 2 Max
+        - anderes / other
+    validations:
+      required: true
+
+  - type: input
+    id: fassung
+    attributes:
+      label: FlowBridge-Fassung / version
+      description: >-
+        Steht unten rechts in der Oberfläche, z. B. 2026.08.16-40. /
+        Shown at the bottom right of the interface.
+      placeholder: "2026.08.16-40"
+    validations:
+      required: true
+
+  - type: textarea
+    id: was
+    attributes:
+      label: Was passiert? / What happens?
+      description: >-
+        Und was hättest du stattdessen erwartet? Fehlermeldungen bitte im
+        Wortlaut. / And what did you expect instead? Please quote error
+        messages verbatim.
+    validations:
+      required: true
+
+  - type: textarea
+    id: schritte
+    attributes:
+      label: Wie lässt es sich auslösen? / How can it be triggered?
+      placeholder: |
+        1. …
+        2. …
+        3. …
+
+  - type: dropdown
+    id: umgebung
+    attributes:
+      label: Wo läuft FlowBridge? / Where does it run?
+      options:
+        - Synology (Container Manager)
+        - Docker auf Linux
+        - Docker Desktop (Windows/macOS)
+        - anderes / other
+    validations:
+      required: true
+
+  - type: input
+    id: broker
+    attributes:
+      label: Lokaler Broker / local broker
+      placeholder: "Mosquitto, Home Assistant, EisBär, …"
+
+  - type: checkboxes
+    id: diagnose
+    attributes:
+      label: Diagnose-Paket
+      options:
+        - label: >-
+            Ich hänge das Diagnose-Paket an (ZIP an diese Meldung ziehen). /
+            I am attaching the diagnostics package.
+
+  - type: markdown
+    attributes:
+      value: |
+        > **Bitte keine vollständige Seriennummer und keine Schlüssel
+        > hineinschreiben.** Ein öffentliches Issue liest jeder. Das
+        > Diagnose-Paket ersetzt beides von selbst; für die Zuordnung genügt
+        > das Modell oben.
+        >
+        > *Please do not paste a full serial number or any keys — a public
+        > issue is readable by everyone.*

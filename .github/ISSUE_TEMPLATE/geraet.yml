@@ -1,0 +1,89 @@
+name: Gerät ergänzen / Add a device
+description: >-
+  Du hast ein Modell, das noch nicht verifiziert ist. / You have a model that
+  has not been verified yet.
+labels: ["geraet"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Verifiziert ist bisher nur das **RIVER 2 Pro** — an echter Hardware,
+        Befehl für Befehl gegengemessen. Die DELTA 2 ist nach Dokumentation
+        vorbereitet, aber nie an einem Gerät gelaufen. Alles andere zeigt seine
+        Werte an und nimmt möglicherweise keine Befehle an.
+
+        Wer ein anderes Modell hat, kann das ändern — dafür ist dieses Formular.
+        Zwei Dinge helfen dabei am meisten, und beide liefert FlowBridge selbst:
+
+        - **Feldinventar** (Einstellungen → *Feldinventar* → herunterladen).
+          Der Knopf ersetzt die Seriennummer durch `<GERAET-1>` und legt das
+          Modell als Zuordnung dazu. Er zeigt, welche Felder dein Gerät wirklich
+          liefert.
+        - **Diagnose-Paket**, falls etwas nicht funktioniert.
+
+        *English is welcome.*
+
+  - type: input
+    id: modell
+    attributes:
+      label: Modell / Model
+      description: >-
+        So wie es in der EcoFlow-App steht. / As shown in the EcoFlow app.
+      placeholder: "z. B. DELTA 2 Max, RIVER 3 Plus"
+    validations:
+      required: true
+
+  - type: input
+    id: fassung
+    attributes:
+      label: FlowBridge-Fassung / version
+      placeholder: "2026.08.16-40"
+    validations:
+      required: true
+
+  - type: textarea
+    id: werte
+    attributes:
+      label: Was wird angezeigt? / Which readings appear?
+      description: >-
+        Kommen Ladestand, Ein- und Ausgangsleistung an? Fehlt etwas
+        Offensichtliches? / Do state of charge, input and output power arrive?
+        Is anything obviously missing?
+    validations:
+      required: true
+
+  - type: textarea
+    id: befehle
+    attributes:
+      label: Was lässt sich schalten? / Which commands work?
+      description: >-
+        Wichtig: EcoFlow meldet auch dann Erfolg, wenn das Gerät einen Befehl
+        still verwirft. Ein grünes Ergebnis ist kein Beweis — nur eine sichtbare
+        Wirkung am Gerät zählt. /
+        Note: EcoFlow reports success even when the device silently discards a
+        command. Only a visible effect on the device counts.
+      placeholder: |
+        AC-Ausgang:      schaltet / schaltet nicht / nicht probiert
+        12-V-Ausgang:    …
+        Ladelimit:       …
+        Ladeleistung:    …
+        Ladepause:       …
+
+  - type: checkboxes
+    id: anhang
+    attributes:
+      label: Anhang / Attachment
+      options:
+        - label: >-
+            Ich hänge das Feldinventar an (Einstellungen → Feldinventar →
+            herunterladen). / I am attaching the field inventory.
+
+  - type: markdown
+    attributes:
+      value: |
+        > **Bitte keine vollständige Seriennummer.** Für die Zuordnung genügt
+        > das Modell; die Herunterladen-Knöpfe ersetzen die Nummer ohnehin durch
+        > einen Platzhalter. Ein Gerätename wie „Speicher Garage" ist dagegen
+        > völlig in Ordnung.
+        >
+        > *Please do not post a full serial number — the model is enough.*
