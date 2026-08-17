@@ -13,7 +13,7 @@
 # weiterhin auf der alten Fassung, ohne dass irgendetwas es meldet. Dort also
 # die Versionsnummer in die image-Zeile eintragen statt :latest; die hat die
 # NAS noch nie gesehen und muss sie holen. Siehe
-# docs/inbetriebnahme-synology.html, Abschnitt "Auf eine neue Fassung
+# docs/FlowBridge-Synology-DE.pdf, Abschnitt "Auf eine neue Fassung
 # aktualisieren".
 #
 # Zum Bauen aus dem Quellcode gibt es daneben compose.build.yaml.

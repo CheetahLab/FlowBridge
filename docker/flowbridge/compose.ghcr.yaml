@@ -7,7 +7,7 @@
 #   Sonst:    docker compose -f compose.ghcr.yaml up -d
 #
 # Schritt-fuer-Schritt-Fassung fuer die Synology:
-#   docs/inbetriebnahme-synology.html
+#   docs/FlowBridge-Synology-DE.pdf  (englisch: -EN.pdf)
 #
 # VOR dem ersten Start zwei Dinge:
 #   1. Den Ordner unter "volumes" anlegen (siehe unten) - legt Docker ihn

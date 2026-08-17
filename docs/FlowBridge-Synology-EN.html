@@ -1,0 +1,1498 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Setting up FlowBridge on a Synology</title>
+
+<style>
+  /* ------------------------------------------------------------------
+     Farben unverändert aus der FlowBridge-CI übernommen
+     (frontend/src/styles/brand.css): Polar Navy, Deep Blue,
+     Electric Blue, Ice Blue, Signal Orange. Ergänzt sind nur die
+     Flächen, die es in der App nicht gibt — Papier, Codeflächen,
+     Hinweiskästen.
+
+     Hell ist hier die Basis, nicht dunkel wie in der App: Das ist ein
+     Text zum Lesen und Abarbeiten, kein Operator-Bildschirm.
+     ------------------------------------------------------------------ */
+  :root {
+    --navy:      #0B1324;
+    --deep:      #0E1F3A;
+    --flow:      #0A6BFF;
+    --ice:       #7DB7FF;
+    --signal:    #FF7A00;
+
+    /* Electric Blue traegt als FLAECHE auf beiden Gruenden (weisse Schrift
+       darauf: 4,0:1). Als SCHRIFT auf dunklem Grund kommt es nur auf ~4:1
+       und ist damit zu schwach - dort uebernimmt Eisblau mit ~8,9:1.
+       Dieselbe Unterscheidung trifft die App selbst mit --fb-value. */
+    --accent-ink: #0A6BFF;
+
+    --bg:        #F7F9FC;
+    --paper:     #FFFFFF;
+    --sunk:      #EDF2F9;
+    --line:      #D7DFEB;
+    --line-soft: #E6ECF5;
+    --text:      #0B1324;
+    --muted:     #53657B;
+    --rail:      #C8D6E8;
+
+    --code-bg:   #0E1F3A;
+    --code-text: #DCE8FA;
+    --code-dim:  #7B92B4;
+    --code-line: #1D3355;
+    --code-str:  #A5E8B0;
+
+    --note-bg:   #EAF2FF;
+    --note-line: #B9D3FF;
+    --note-ink:  #0A57CC;
+    --warn-bg:   #FFF3E6;
+    --warn-line: #FFCB94;
+    --warn-ink:  #A34B00;
+
+    --shadow: 0 1px 2px rgba(11,19,36,.05), 0 8px 24px -12px rgba(11,19,36,.18);
+    --ring:   var(--bg);
+
+    --sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+    --mono: "Cascadia Code", "Cascadia Mono", Consolas, ui-monospace, "SF Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #0B1324;
+      --paper:     #0E1F3A;
+      --sunk:      #0C1B31;
+      --line:      #243A5E;
+      --line-soft: #1B2E4C;
+      --text:      #F7F9FC;
+      --muted:     #A9B8D0;
+      --rail:      #2B4570;
+      --accent-ink: #7DB7FF;
+
+      --code-bg:   #071224;
+      --code-text: #DCE8FA;
+      --code-dim:  #6E86A8;
+      --code-line: #1D3355;
+
+      --note-bg:   #102A4C;
+      --note-line: #2A4B7C;
+      --note-ink:  #7DB7FF;
+      --warn-bg:   #33210E;
+      --warn-line: #6B4415;
+      --warn-ink:  #FFB877;
+
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:        #0B1324;
+    --paper:     #0E1F3A;
+    --sunk:      #0C1B31;
+    --line:      #243A5E;
+    --line-soft: #1B2E4C;
+    --text:      #F7F9FC;
+    --muted:     #A9B8D0;
+    --rail:      #2B4570;
+    --accent-ink: #7DB7FF;
+
+    --code-bg:   #071224;
+    --code-text: #DCE8FA;
+    --code-dim:  #6E86A8;
+    --code-line: #1D3355;
+
+    --note-bg:   #102A4C;
+    --note-line: #2A4B7C;
+    --note-ink:  #7DB7FF;
+    --warn-bg:   #33210E;
+    --warn-line: #6B4415;
+    --warn-ink:  #FFB877;
+
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.68;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 48rem; margin: 0 auto; padding: 3.5rem 1.5rem 5rem; }
+
+  /* ---------- Kopf ---------- */
+  .head { display: flex; flex-direction: column; gap: 1.25rem; }
+  .mark { display: flex; align-items: center; gap: .85rem; }
+  .mark svg { display: block; flex: none; }
+  .mark .word { font-size: 1.5rem; font-weight: 700; letter-spacing: -.02em; }
+  .mark .word b { font-weight: 800; color: var(--accent-ink); }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2rem, 5.2vw, 2.9rem);
+    line-height: 1.08;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    text-wrap: balance;
+  }
+
+  .lede {
+    margin: 0; font-size: 1.15rem; color: var(--muted);
+    max-width: 34rem; text-wrap: pretty;
+  }
+
+  .meta { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .25rem; }
+  .chip {
+    font-family: var(--mono); font-size: .74rem; letter-spacing: .06em;
+    text-transform: uppercase; padding: .3rem .65rem;
+    border: 1px solid var(--line); border-radius: 999px;
+    color: var(--muted); background: var(--paper);
+  }
+
+  hr.rule { border: 0; height: 1px; background: var(--line); margin: 3rem 0; }
+
+  /* ---------- Typo ---------- */
+  .eyebrow {
+    font-family: var(--mono); font-size: .74rem; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--accent-ink); margin: 0 0 .5rem;
+  }
+  h2 {
+    margin: 0 0 1rem; font-size: 1.55rem; font-weight: 750;
+    letter-spacing: -.02em; line-height: 1.2; text-wrap: balance;
+  }
+  h3 { margin: 1.6rem 0 .55rem; font-size: 1.03rem; font-weight: 700; letter-spacing: -.01em; }
+  h4 { margin: 1.3rem 0 .4rem; font-size: .95rem; font-weight: 700;
+       color: var(--accent-ink); letter-spacing: -.01em; }
+  h3:first-child { margin-top: 0; }
+  p { margin: 0 0 1rem; text-wrap: pretty; }
+  p:last-child { margin-bottom: 0; }
+  a { color: var(--accent-ink); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--flow); outline-offset: 3px; border-radius: 3px; }
+  strong { font-weight: 700; }
+  em { font-style: normal; font-weight: 650; color: var(--note-ink); }
+
+  ul, ol { margin: 0 0 1rem; padding-left: 1.35rem; }
+  li { margin-bottom: .45rem; }
+  li:last-child { margin-bottom: 0; }
+
+  /* ---------- Vokabel-Kasten ---------- */
+  .vocab {
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 14px; padding: 1.3rem 1.4rem; box-shadow: var(--shadow);
+    display: grid; gap: 1rem;
+  }
+  .vocab dl { margin: 0; display: grid; gap: .85rem; }
+  .vocab dt {
+    font-weight: 750; font-size: 1rem; margin-bottom: .1rem;
+    display: flex; align-items: center; gap: .55rem;
+  }
+  .vocab dt::before {
+    content: ""; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--flow); flex: none;
+  }
+  .vocab dl > div:nth-child(2) dt::before { background: var(--ice); }
+  .vocab dl > div:nth-child(3) dt::before { background: var(--signal); }
+  .vocab dd { margin: 0 0 0 1.5rem; color: var(--muted); font-size: .96rem; }
+
+  /* ---------- Vorbereitung ---------- */
+  .prep { display: grid; gap: .75rem; }
+  .prep-item {
+    display: grid; grid-template-columns: auto 1fr; gap: .9rem; align-items: start;
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 12px; padding: 1rem 1.15rem; box-shadow: var(--shadow);
+  }
+  .prep-item .dot {
+    width: 11px; height: 11px; border-radius: 50%; margin-top: .55rem;
+    background: var(--flow); flex: none;
+  }
+  .prep-item:nth-child(2) .dot { background: var(--ice); }
+  .prep-item:nth-child(3) .dot { background: var(--signal); }
+  .prep-item h3 { margin: 0 0 .2rem; font-size: 1rem; }
+  .prep-item p { margin: 0; font-size: .95rem; color: var(--muted); }
+  .prep-item p + p { margin-top: .5rem; }
+
+  /* ---------- Schritt-Schiene ----------
+     Die Bildmarke ist eine Leitung mit drei Knoten. Die Anleitung
+     stellt dieselbe Leitung senkrecht und hängt die Schritte daran
+     auf. Nummern sind hier keine Dekoration: Die Reihenfolge trägt
+     Bedeutung — der Ordner MUSS vor dem Projekt da sein, das
+     Passwort VOR dem ersten Start. */
+  .steps { position: relative; display: grid; gap: 2.4rem; padding-left: 3.5rem; }
+  .steps::before {
+    content: ""; position: absolute; left: 1.05rem; top: 1rem; bottom: 2.5rem;
+    width: 3px; border-radius: 2px; background: var(--rail);
+  }
+  .step { position: relative; }
+  .step > .node {
+    position: absolute; left: -3.5rem; top: -.15rem;
+    width: 2.3rem; height: 2.3rem; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--flow); color: #fff;
+    font-family: var(--mono); font-size: .95rem; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    box-shadow: 0 0 0 5px var(--ring);
+  }
+  .step.is-last > .node { background: var(--signal); }
+  .step > h2 { margin-bottom: .75rem; }
+  .step-body {
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 14px; padding: 1.35rem 1.4rem; box-shadow: var(--shadow);
+  }
+
+  /* ---------- Klickpfad ---------- */
+  .path {
+    font-family: var(--mono); font-size: .87rem;
+    background: var(--sunk); border: 1px solid var(--line-soft);
+    border-radius: 9px; padding: .65rem .8rem; margin: 0 0 1rem;
+    overflow-x: auto; white-space: nowrap; color: var(--text);
+  }
+  .path .sep { color: var(--accent-ink); padding: 0 .35em; font-weight: 700; }
+
+  /* ---------- Dialog-Nachbau ----------
+     Zeigt, wie die Maske im Container Manager aussieht, damit man
+     Feld und Eintrag nebeneinander sieht statt in Fließtext zu suchen. */
+  .dialog {
+    border: 1px solid var(--line); border-radius: 12px;
+    overflow: hidden; margin: 0 0 1rem; background: var(--sunk);
+  }
+  .dialog-title {
+    padding: .6rem .9rem; background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    font-size: .84rem; font-weight: 700; letter-spacing: -.01em;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .dialog-title::before {
+    content: ""; width: 7px; height: 7px; border-radius: 2px;
+    background: var(--flow); flex: none;
+  }
+  .dialog-rows { display: grid; }
+  .drow {
+    display: grid; grid-template-columns: 11rem 1fr; gap: .9rem;
+    padding: .7rem .9rem; border-bottom: 1px solid var(--line-soft);
+    font-size: .94rem; align-items: start;
+  }
+  .drow:last-child { border-bottom: 0; }
+  .drow .lbl { color: var(--muted); font-weight: 650; }
+  .drow .val { word-break: break-word; }
+  .drow .hint { display: block; color: var(--muted); font-size: .86rem; margin-top: .15rem; }
+
+  @media (max-width: 30rem) {
+    .drow { grid-template-columns: 1fr; gap: .2rem; }
+  }
+
+  /* ---------- Code ---------- */
+  .code {
+    background: var(--code-bg); border: 1px solid var(--code-line);
+    border-radius: 11px; margin: 0 0 1rem; overflow: hidden;
+  }
+  .code-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: .5rem .85rem; border-bottom: 1px solid var(--code-line);
+    font-family: var(--mono); font-size: .72rem; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--code-dim);
+  }
+  .code pre {
+    margin: 0; padding: .9rem 1rem 1.05rem; overflow-x: auto;
+    font-family: var(--mono); font-size: .85rem; line-height: 1.6;
+    color: var(--code-text); tab-size: 2;
+  }
+  .code pre .c { color: var(--code-dim); }
+  .code pre .k { color: var(--ice); }
+  .code pre .v { color: var(--code-str); }
+  .code pre mark {
+    background: rgba(255,122,0,.24); color: var(--signal);
+    border-radius: 3px; padding: 0 .18em; font-weight: 700;
+  }
+
+  code.inline {
+    font-family: var(--mono); font-size: .875em;
+    background: var(--sunk); border: 1px solid var(--line-soft);
+    border-radius: 5px; padding: .1em .35em; word-break: break-word;
+  }
+
+  .hl {
+    background: rgba(255,122,0,.18); color: inherit;
+    border-radius: 3px; padding: 0 .2em; font-weight: 650;
+  }
+
+  /* ---------- Kästen ---------- */
+  .note, .warn {
+    border-radius: 11px; padding: .9rem 1.05rem; margin: 0 0 1rem;
+    font-size: .95rem; border: 1px solid;
+  }
+  .note { background: var(--note-bg); border-color: var(--note-line); }
+  .warn { background: var(--warn-bg); border-color: var(--warn-line); }
+  .note > :last-child, .warn > :last-child { margin-bottom: 0; }
+  .note .label, .warn .label {
+    display: block; font-family: var(--mono); font-size: .71rem;
+    letter-spacing: .11em; text-transform: uppercase;
+    margin-bottom: .35rem; font-weight: 700;
+  }
+  .note .label { color: var(--note-ink); }
+  .warn .label { color: var(--warn-ink); }
+  .note em { color: inherit; }
+
+  /* ---------- Tabellen ---------- */
+  .tablewrap { overflow-x: auto; margin: 0 0 1rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .93rem; }
+  th, td { text-align: left; padding: .6rem .7rem; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th {
+    font-family: var(--mono); font-size: .71rem; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--muted);
+    border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  td:first-child { font-weight: 650; }
+  tr:last-child td { border-bottom: 0; }
+
+  /* ---------- Fehlersuche ---------- */
+  .trouble { display: grid; gap: .7rem; }
+  details {
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 12px; overflow: hidden;
+  }
+  summary {
+    cursor: pointer; padding: .9rem 1.1rem; font-weight: 650;
+    list-style: none; display: flex; align-items: center; gap: .7rem;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before {
+    content: ""; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--signal); flex: none;
+  }
+  summary:focus-visible { outline: 2px solid var(--flow); outline-offset: -2px; }
+  details[open] summary { border-bottom: 1px solid var(--line-soft); }
+  .details-body { padding: 1rem 1.1rem 1.1rem; font-size: .95rem; }
+  .details-body > :last-child { margin-bottom: 0; }
+
+  /* ---------- Fuß ---------- */
+  footer {
+    margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--line);
+    font-size: .9rem; color: var(--muted);
+  }
+  footer p { margin-bottom: .5rem; }
+
+  @media (max-width: 33rem) {
+    body { font-size: 16px; }
+    .wrap { padding: 2.5rem 1.1rem 4rem; }
+    .steps { padding-left: 0; }
+    .steps::before { display: none; }
+    .step > .node { position: static; margin-bottom: .6rem; box-shadow: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="head">
+    <div class="mark">
+      <svg width="38" height="38" viewBox="0 0 100 100" aria-hidden="true">
+        <rect width="100" height="100" rx="22" fill="#0E1F3A"/>
+        <g transform="translate(4.2 50) scale(1.2727)">
+          <path d="M17 0H51" stroke="#7DB7FF" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="20" cy="0" r="6" fill="#0A6BFF"/>
+          <circle cx="34" cy="0" r="6" fill="#7DB7FF"/>
+          <circle cx="52" cy="0" r="6" fill="#FF7A00"/>
+        </g>
+      </svg>
+      <span class="word">Flow<b>Bridge</b></span>
+    </div>
+
+    <h1>Setting up FlowBridge on a Synology</h1>
+
+    <p class="lede">
+      Step by step, from nothing to live readings from your EcoFlow power
+      station. No prior knowledge, no command line — everything runs through
+      the NAS interface.
+    </p>
+
+    <div class="meta">
+      <span class="chip">DSM 7 · Container Manager</span>
+      <span class="chip">5 to 10 minutes</span>
+      <span class="chip">Two routes — one is enough</span>
+    </div>
+  </header>
+
+  <hr class="rule">
+
+  <!-- ============ VOCABULARY ============ -->
+  <section>
+    <p class="eyebrow">So we mean the same things</p>
+    <h2>Three words that keep coming up</h2>
+    <p>
+      This is all the jargon you need for this guide. If the terms are familiar,
+      just skip the box.
+    </p>
+
+    <div class="vocab">
+      <dl>
+        <div>
+          <dt>Image</dt>
+          <dd>
+            A finished software package to download — comparable to an installer,
+            except everything the program needs to run is already inside. You do
+            not install anything, you only download it.
+          </dd>
+        </div>
+        <div>
+          <dt>Container</dt>
+          <dd>
+            Such an image while it is running. It lives in its own little box on
+            the NAS and never touches the rest of your system. Delete the
+            container and it is gone without a trace.
+          </dd>
+        </div>
+        <div>
+          <dt>Broker</dt>
+          <dd>
+            The exchange for MQTT — the software where all the devices in your
+            house drop off and pick up their readings. Usually Mosquitto, often
+            part of Home Assistant or EisBär. FlowBridge delivers there.
+          </dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ============ PREPARATION ============ -->
+  <section>
+    <p class="eyebrow">Preparation</p>
+    <h2>Three things to fetch beforehand</h2>
+    <p>
+      Get these now. Going looking for them halfway through the setup is the
+      surest way to lose the thread.
+    </p>
+
+    <div class="prep">
+      <div class="prep-item">
+        <span class="dot"></span>
+        <div>
+          <h3>An access key and secret key from EcoFlow</h3>
+          <p>
+            Two long strings with which FlowBridge identifies itself to EcoFlow.
+            You get them free of charge on the
+            <a href="https://developer-eu.ecoflow.com" target="_blank" rel="noopener noreferrer">EcoFlow IoT Open Platform</a>:
+            register, wait briefly for activation, then both keys are shown in
+            the portal.
+          </p>
+          <p>
+            <strong>Important:</strong> sign in there with the same account your
+            power station is registered to in the EcoFlow app. With the keys of
+            a different account FlowBridge will not find your device.
+          </p>
+        </div>
+      </div>
+
+      <div class="prep-item">
+        <span class="dot"></span>
+        <div>
+          <h3>The address of your MQTT broker</h3>
+          <p>
+            Its IP address on your own network, usually something like
+            <code class="inline">192.168.1.50</code>, plus the port number —
+            almost always <code class="inline">1883</code>. If your broker
+            requires a user name and password, have those ready too.
+          </p>
+        </div>
+      </div>
+
+      <div class="prep-item">
+        <span class="dot"></span>
+        <div>
+          <h3>Container Manager on the NAS</h3>
+          <p>
+            Check in <strong>Package Center</strong> whether it is installed.
+            If not: search, install, done. That takes two minutes and needs no
+            restart.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ============ COMMON START ============ -->
+  <section>
+    <p class="eyebrow">Here we go</p>
+    <h2>Two steps for everyone, then one decision</h2>
+    <p>
+      You need the next two steps in any case. After that there are two routes
+      to get FlowBridge onto the NAS — <strong>one is enough</strong>, both end
+      at the same running container.
+    </p>
+    <div class="note">
+      <span class="label">If the labels look different</span>
+      <p>
+        This guide uses the English DSM wording. Depending on the DSM version
+        the menu entries can be named slightly differently. What matters are
+        the things themselves, not the exact word.
+      </p>
+    </div>
+  </section>
+
+  <div class="steps">
+
+    <section class="step">
+      <span class="node">1</span>
+      <h2>Create two folders</h2>
+      <div class="step-body">
+        <p>
+          Open <strong>File Station</strong> — the file manager of the NAS.
+          There is a shared folder named <code class="inline">docker</code>.
+          If there is not, create it.
+        </p>
+        <p>Inside it, build this structure:</p>
+        <p class="path">docker <span class="sep">&#8250;</span> flowbridge <span class="sep">&#8250;</span> data</p>
+        <p>
+          So one folder <code class="inline">flowbridge</code>, and
+          <em>inside that</em> another one named <code class="inline">data</code>.
+          Both names exactly like that, lower case.
+        </p>
+
+        <div class="note">
+          <span class="label">Why two folders</span>
+          <p>
+            In <code class="inline">flowbridge</code> the NAS will put its own
+            project file. In <code class="inline">data</code> your credentials
+            and settings end up. Keeping them apart pays off later: you can
+            delete the project and create it again without losing your setup.
+          </p>
+        </div>
+
+        <div class="note">
+          <span class="label">You do not need to worry about permissions</span>
+          <p>
+            Inside the container FlowBridge deliberately does <em>not</em> run
+            as system administrator — that is the one real safeguard a container
+            brings. So that the data folder is writable regardless, FlowBridge
+            prepares it itself at startup.
+          </p>
+          <p>
+            You therefore need neither SSH nor hand-assigned permissions. Should
+            it get stuck anyway, FlowBridge says in the browser, in plain words,
+            what to do — instead of quietly restarting in circles.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="step is-last">
+      <span class="node">2</span>
+      <h2>Open Container Manager</h2>
+      <div class="step-body">
+        <p>
+          Start <strong>Container Manager</strong> from the main menu of the
+          NAS. In the sidebar you will find several entries —
+          <em>Overview</em>, <em>Container</em>, <em>Image</em>,
+          <em>Registry</em>, <em>Project</em>.
+        </p>
+        <p>
+          Two of them lead to the goal: <strong>Project</strong> (route A) and
+          <strong>Registry</strong> (route B). Which one to take is explained
+          right below.
+        </p>
+      </div>
+    </section>
+
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ WHICH ROUTE ============ -->
+  <section>
+    <p class="eyebrow">Time to decide</p>
+    <h2>Route A or route B?</h2>
+    <p>
+      Both fetch the same image from the same place. The only difference is
+      <em>how</em> the settings get in: as one block of text to paste — or
+      clicked through several dialog pages.
+    </p>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th></th><th>Route A — with text</th><th>Route B — via the registry</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Time</td><td>about 5 minutes</td><td>about 10 minutes</td></tr>
+          <tr><td>What you do</td><td>copy one block, change one word</td><td>search for the image, then fill in fields across several pages</td></tr>
+          <tr><td>Where it goes wrong</td><td>the indentation when pasting</td><td>port, folder path and variable names — each by hand</td></tr>
+          <tr><td>Log size capped</td><td><strong>yes</strong>, it is in the text</td><td><strong>no</strong>, the wizard does not offer it</td></tr>
+          <tr><td>Health check</td><td><strong>yes</strong></td><td>no</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="warn">
+      <span class="label">Why I recommend route A</span>
+      <p>
+        Not because of the five minutes. The block of text carries two settings
+        the wizard does not offer at all: a <strong>cap on the log
+        files</strong> (3&#160;&#215;&#160;10&#160;MB) and a <strong>health
+        check</strong>, by which the NAS notices when FlowBridge is running but
+        no longer answering.
+      </p>
+      <p>
+        Without the cap the container log keeps growing indefinitely — on a NAS
+        that runs for years, that is not a theoretical problem.
+      </p>
+      <p>
+        Route B is described anyway: not everyone likes YAML blocks, and whoever
+        wants to see what the NAS actually configures sees it there field by
+        field.
+      </p>
+    </div>
+  </section>
+  <hr class="rule">
+
+  <!-- ============ ROUTE A ============ -->
+  <section>
+    <p class="eyebrow">Route A — recommended</p>
+    <h2>With ready-made text</h2>
+    <p>
+      You create a <strong>project</strong> and paste in a finished description.
+      It holds everything at once: which image, which port, which folder, which
+      password.
+    </p>
+  </section>
+
+  <div class="steps">
+
+    <section class="step">
+      <span class="node">1</span>
+      <h2>Create the project</h2>
+      <div class="step-body">
+        <p>
+          In Container Manager click <strong>Project</strong> in the sidebar,
+          then <strong>Create</strong> at the top.
+        </p>
+        <p class="path">Container Manager <span class="sep">&#8250;</span> Project <span class="sep">&#8250;</span> Create</p>
+        <p>A form opens. Fill it in like this:</p>
+
+        <div class="dialog">
+          <div class="dialog-title">Create project</div>
+          <div class="dialog-rows">
+            <div class="drow">
+              <span class="lbl">Project name</span>
+              <span class="val">
+                <code class="inline">flowbridge</code>
+                <span class="hint">Lower case, no spaces.</span>
+              </span>
+            </div>
+            <div class="drow">
+              <span class="lbl">Path</span>
+              <span class="val">
+                Click <strong>Set Path</strong> and choose
+                <code class="inline">docker/flowbridge</code>
+                <span class="hint">The outer folder — <strong>not</strong> <code class="inline">data</code>.</span>
+              </span>
+            </div>
+            <div class="drow">
+              <span class="lbl">Source</span>
+              <span class="val">
+                &#8222;Create docker-compose.yml&#8220;
+                <span class="hint">Usually preselected. Do not choose &#8222;upload&#8220; — you do not have a file, you have text.</span>
+              </span>
+            </div>
+            <div class="drow">
+              <span class="lbl">Large text field</span>
+              <span class="val">
+                Leave empty for now — the content comes in the next step
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="note">
+          <span class="label">If the labels differ</span>
+          <p>
+            Depending on the DSM version the fields are named slightly
+            differently. What matters are the three things: <strong>name</strong>,
+            <strong>folder</strong> and choosing to <strong>enter the text
+            yourself</strong> instead of uploading a file.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="step">
+      <span class="node">2</span>
+      <h2>Paste this text</h2>
+      <div class="step-body">
+        <p>
+          This is the description the NAS starts FlowBridge from. Select all of
+          it, copy it and paste it into the large text field. You will change
+          the <span class="hl">orange</span> line in a moment.
+        </p>
+
+        <div class="code">
+          <div class="code-head"><span>docker-compose.yml</span><span>copy in full</span></div>
+<pre><span class="k">services:</span>
+  <span class="k">flowbridge:</span>
+    <span class="k">image:</span> <span class="v">cheetahlab/flowbridge:latest</span>
+    <span class="k">container_name:</span> <span class="v">flowbridge</span>
+    <span class="k">restart:</span> <span class="v">unless-stopped</span>
+
+    <span class="k">ports:</span>
+      <span class="c"># Left is the port on the NAS, right the one in the container.</span>
+      <span class="c"># Only change the left number, if 8081 is already taken.</span>
+      - <span class="v">"8081:8080"</span>
+
+    <span class="k">environment:</span>
+      <span class="k">FLOWBRIDGE_CONFIG:</span> <span class="v">/config/config.yaml</span>
+      <span class="k">TZ:</span> <span class="v">Europe/Berlin</span>
+      <span class="k">FLOWBRIDGE_PASSWORD:</span> <mark>"put-a-good-password-here"</mark>
+
+    <span class="k">volumes:</span>
+      <span class="c"># Left your folder on the NAS, right the place in the container.</span>
+      - <span class="v">/volume1/docker/flowbridge/data:/config</span>
+
+    <span class="k">healthcheck:</span>
+      <span class="k">test:</span>
+        - <span class="v">CMD</span>
+        - <span class="v">python</span>
+        - <span class="v">-c</span>
+        - <span class="v">"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/auth/state', timeout=5)"</span>
+      <span class="k">interval:</span> <span class="v">30s</span>
+      <span class="k">timeout:</span> <span class="v">10s</span>
+      <span class="k">start_period:</span> <span class="v">20s</span>
+      <span class="k">retries:</span> <span class="v">3</span>
+
+    <span class="k">logging:</span>
+      <span class="k">driver:</span> <span class="v">json-file</span>
+      <span class="k">options:</span> { <span class="k">max-size:</span> <span class="v">"10m"</span>, <span class="k">max-file:</span> <span class="v">"3"</span> }
+
+    <span class="k">stop_grace_period:</span> <span class="v">20s</span></pre>
+        </div>
+
+        <h3>Now set the password</h3>
+        <p>
+          Replace <code class="inline">put-a-good-password-here</code> with one
+          of your own. <strong>Keep the quotation marks.</strong> So
+        </p>
+        <p class="path">FLOWBRIDGE_PASSWORD: "put-a-good-password-here"</p>
+        <p>becomes, for example</p>
+        <p class="path">FLOWBRIDGE_PASSWORD: "Sunshine-2026!"</p>
+
+        <div class="warn">
+          <span class="label">Why already now</span>
+          <p>
+            FlowBridge can not only read your power station but also control it
+            — start charging, switch outputs, change charging power. Without a
+            password that would be open to anyone on your network.
+          </p>
+          <p>
+            Entering it here means the protection is active from the very first
+            start. There is then no window in which FlowBridge sits unprotected
+            on the network.
+          </p>
+        </div>
+
+        <div class="note">
+          <span class="label">Mind the indentation</span>
+          <p>
+            When pasting, please do not change the spaces at the start of the
+            lines — this file format takes indentation literally. If the NAS
+            complains about the description, almost always a line has slipped.
+            Then simply copy it again cleanly.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="step is-last">
+      <span class="node">3</span>
+      <h2>Through the wizard and start</h2>
+      <div class="step-body">
+        <p>
+          From here the NAS leads you through a few pages. In order:
+        </p>
+
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr><th>Page</th><th>What you do</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Web Portal / Web Station</td>
+                <td>Nothing. You do not need this — just <strong>Next</strong>.</td>
+              </tr>
+              <tr>
+                <td>Summary</td>
+                <td>Glance over whether path and name are right, then <strong>Done</strong>.</td>
+              </tr>
+              <tr>
+                <td>Log window</td>
+                <td>Runs by itself. Watch it or get a coffee.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          Now the NAS downloads the image, a good 200&#160;MB. Lines rush past in
+          the log window — that is normal and need not concern you. At the end it
+          says, in effect, that the container has been created and started.
+        </p>
+        <p>
+          Once the project shows <strong>Running</strong> in the overview, the
+          hardest part is behind you.
+        </p>
+
+        <div class="note">
+          <span class="label">No account needed</span>
+          <p>
+            You do not have to sign in anywhere or unlock anything. FlowBridge
+            is publicly available and is simply downloaded.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ ROUTE B ============ -->
+  <section>
+    <p class="eyebrow">Route B — the manual one</p>
+    <h2>Via the registry</h2>
+    <p>
+      No text, but more clicking: you search for the image in the registry,
+      download it and configure the container through the wizard.
+    </p>
+    <div class="note">
+      <span class="label">Already done route A?</span>
+      <p>
+        Then skip this section and continue at <strong>Setting up
+        FlowBridge</strong>. Going both routes achieves nothing — the port would
+        afterwards be taken twice.
+      </p>
+    </div>
+  </section>
+
+  <div class="steps">
+
+    <section class="step">
+      <span class="node">1</span>
+      <h2>Download the image</h2>
+      <div class="step-body">
+        <p>
+          In Container Manager click <strong>Registry</strong> in the sidebar.
+          There is a search field at the top — enter:
+        </p>
+        <p class="path">cheetahlab/flowbridge</p>
+        <p>
+          The result appears after a few seconds. Select it, then click
+          <strong>Download</strong>. It asks you for the tag.
+        </p>
+
+        <div class="note">
+          <span class="label">Which tag?</span>
+          <p>
+            <code class="inline">latest</code> is at the top of the list, below
+            it version numbers such as
+            <code class="inline">2026.08.16-46</code>. For the first time
+            <code class="inline">latest</code> is fine — that is always the
+            newest one.
+          </p>
+          <p>
+            <strong>Updating later is a different matter</strong>: then the
+            number is what counts, on both routes. Why, is explained below under
+            <em>Updating to a new version</em>.
+          </p>
+        </div>
+
+        <p>
+          The progress is shown under <strong>Image</strong>. A good
+          200&#160;MB; once the entry sits there without a progress bar, it is
+          finished.
+        </p>
+      </div>
+    </section>
+
+    <section class="step">
+      <span class="node">2</span>
+      <h2>Configure the container</h2>
+      <div class="step-body">
+        <p>
+          Click <strong>Image</strong> in the sidebar, select the downloaded
+          one, then <strong>Run</strong> at the top. Now come the pages where
+          route A simply had a block of text.
+        </p>
+
+        <div class="dialog">
+          <div class="dialog-title">Create container</div>
+          <div class="dialog-rows">
+            <div class="drow">
+              <span class="lbl">Container name</span>
+              <span class="val">
+                <code class="inline">flowbridge</code>
+                <span class="hint">Lower case, no spaces.</span>
+              </span>
+            </div>
+            <div class="drow">
+              <span class="lbl">Auto-restart</span>
+              <span class="val">
+                enable it
+                <span class="hint">Otherwise FlowBridge will not start by itself after the NAS reboots.</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <p>
+          Then click <strong>Advanced Settings</strong> — without those, port,
+          folder and password are missing, and FlowBridge would be neither
+          reachable nor able to remember anything.
+        </p>
+
+        <div class="dialog">
+          <div class="dialog-title">Advanced Settings</div>
+          <div class="dialog-rows">
+            <div class="drow">
+              <span class="lbl">Port Settings</span>
+              <span class="val">
+                Local port <code class="inline">8081</code> &#8594; container port <code class="inline">8080</code>
+                <span class="hint">The field often sits on &#8222;Auto&#8220; — that yields a different number at every start. Enter 8081 explicitly.</span>
+              </span>
+            </div>
+            <div class="drow">
+              <span class="lbl">Volume / Folder</span>
+              <span class="val">
+                <code class="inline">docker/flowbridge/data</code> &#8594; mount path <code class="inline">/config</code>
+                <span class="hint">The <strong>data</strong> folder from step 1, not the one above it. With write access, not read-only.</span>
+              </span>
+            </div>
+            <div class="drow">
+              <span class="lbl">Environment</span>
+              <span class="val">three variables, see below</span>
+            </div>
+          </div>
+        </div>
+
+        <p>Under <strong>Environment</strong> you add three entries:</p>
+
+        <div class="code">
+          <div class="code-head"><span>Environment variables</span><span>per line: name, then value</span></div>
+<pre><span class="k">FLOWBRIDGE_CONFIG</span>     <span class="v">/config/config.yaml</span>
+<span class="k">TZ</span>                    <span class="v">Europe/Berlin</span>
+<span class="k">FLOWBRIDGE_PASSWORD</span>   <mark>your-own-password</mark></pre>
+        </div>
+
+        <div class="warn">
+          <span class="label">Do not leave out the password</span>
+          <p>
+            FlowBridge can not only read your power station but also control it
+            — start charging, switch outputs. Without this variable it runs
+            unprotected on the network at first start, until someone sets one in
+            the browser.
+          </p>
+          <p>
+            Here <strong>without</strong> quotation marks — unlike in the text
+            block of route A. The wizard takes the value literally; quotation
+            marks would become part of the password.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="step is-last">
+      <span class="node">3</span>
+      <h2>Start</h2>
+      <div class="step-body">
+        <p>
+          <strong>Next</strong>, glance over the summary, then
+          <strong>Done</strong>. Leave the tick at &#8222;Run this container
+          after the wizard is finished&#8220; set.
+        </p>
+        <p>
+          Under <strong>Container</strong>, <code class="inline">flowbridge</code>
+          should show <strong>Running</strong> right afterwards.
+        </p>
+
+        <div class="note">
+          <span class="label">Does it say &#8222;Stopped&#8220;?</span>
+          <p>
+            Then the <strong>Log</strong> tab says why, in plain words. The most
+            common case is the folder: if the mount does not point at
+            <code class="inline">data</code>, or write access is missing,
+            FlowBridge cannot store its configuration.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+  <hr class="rule">
+
+  <!-- ============ SETTING UP (COMMON) ============ -->
+  <section>
+    <p class="eyebrow">The same for both routes</p>
+    <h2>Setting up FlowBridge</h2>
+    <p>
+      The container is running — it just does not know anything about your
+      power station yet. That comes now, in the browser.
+    </p>
+  </section>
+
+  <div class="steps">
+
+    <section class="step">
+      <span class="node">1</span>
+      <h2>Open the interface for the first time</h2>
+      <div class="step-body">
+        <p>
+          Open a new browser tab and enter the address of your NAS, followed by
+          a colon and <code class="inline">8081</code>:
+        </p>
+        <p class="path">http://192.168.1.20:8081</p>
+        <p>
+          Replace the numbers with the IP of your own NAS, of course — the same
+          one you use to reach DSM.
+        </p>
+        <p>
+          A sign-in appears. Enter the password you set as
+          <code class="inline">FLOWBRIDGE_PASSWORD</code> during setup.
+        </p>
+
+        <div class="note">
+          <span class="label">Does it say &#8222;Set password&#8220; instead?</span>
+          <p>
+            Then FlowBridge did not read your line — usually a typo in the name
+            <code class="inline">FLOWBRIDGE_PASSWORD</code>. No great matter:
+            just set the password here in the interface and carry on.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="step">
+      <span class="node">2</span>
+      <h2>Enter EcoFlow and broker</h2>
+      <div class="step-body">
+        <p>
+          You land straight in <strong>Setup</strong>. Five fields, top to
+          bottom:
+        </p>
+
+        <div class="dialog">
+          <div class="dialog-title">Setup</div>
+          <div class="dialog-rows">
+            <div class="drow">
+              <span class="lbl">Access key</span>
+              <span class="val">from the EcoFlow developer portal</span>
+            </div>
+            <div class="drow">
+              <span class="lbl">Secret key</span>
+              <span class="val">from there as well</span>
+            </div>
+            <div class="drow">
+              <span class="lbl">Local broker IP</span>
+              <span class="val">
+                <code class="inline">192.168.1.50</code>
+                <span class="hint">The address of your MQTT broker, not that of the NAS — unless the broker runs on the NAS.</span>
+              </span>
+            </div>
+            <div class="drow">
+              <span class="lbl">Port</span>
+              <span class="val">
+                <code class="inline">1883</code>
+                <span class="hint">Usually filled in already.</span>
+              </span>
+            </div>
+            <div class="drow">
+              <span class="lbl">User name, password</span>
+              <span class="val">
+                only if your broker requires them
+                <span class="hint">Otherwise leave both fields empty.</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <h3>Fetch the device instead of typing it</h3>
+        <p>
+          As soon as both keys are in, click <strong>Find devices</strong>.
+          FlowBridge queries your EcoFlow account and fills in serial number and
+          model by itself — typing serial numbers is a source of errors you can
+          spare yourself.
+        </p>
+        <p>
+          You may overwrite the name. It shows up later in the interface and in
+          the MQTT topics, so pick something telling, like
+          <code class="inline">Garage battery</code>.
+        </p>
+
+        <h3>Test first, then save</h3>
+        <p>
+          Click <strong>Test connection</strong>. If it works, FlowBridge
+          reports the EcoFlow broker and how many readings it found — for a
+          River 2 Pro that is around a hundred. <strong>If a number is shown,
+          everything is right.</strong>
+        </p>
+        <p>
+          Then click <strong>Save</strong>.
+        </p>
+      </div>
+    </section>
+
+    <section class="step is-last">
+      <span class="node">3</span>
+      <h2>Check that it flows</h2>
+      <div class="step-body">
+        <p>
+          After saving, FlowBridge jumps to the dashboard. At the top you see
+          three status indicators: <strong>EcoFlow</strong>, <strong>MQTT</strong>
+          and your power station. All three green means: readings are arriving
+          and going back out.
+        </p>
+        <p>
+          State of charge, input and output power should now move every second.
+          On your broker the values sit under topics beginning with
+          <code class="inline">flowbridge/</code>.
+        </p>
+
+        <div class="note">
+          <span class="label">Home Assistant</span>
+          <p>
+            If HA runs on the same broker, you need to configure nothing there.
+            FlowBridge announces itself, and your power station appears as a
+            device with all its sensors.
+          </p>
+        </div>
+
+        <p style="margin-top:1rem"><strong>That is it. FlowBridge is running.</strong></p>
+      </div>
+    </section>
+
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ AFTERWARDS ============ -->
+  <section>
+    <p class="eyebrow">Afterwards</p>
+    <h2>Two things for later</h2>
+
+    <h3>Take the password out of the settings</h3>
+    <p>
+      It sits there in the clear. Once FlowBridge has run, you can delete the
+      <code class="inline">FLOWBRIDGE_PASSWORD</code> line — depending on which
+      route you took:
+    </p>
+    <p class="path">
+      <strong>Route A:</strong> Project <span class="sep">&#8250;</span> flowbridge <span class="sep">&#8250;</span> Action <span class="sep">&#8250;</span> Edit
+    </p>
+    <p class="path">
+      <strong>Route B:</strong> Container <span class="sep">&#8250;</span> flowbridge <span class="sep">&#8250;</span> Details <span class="sep">&#8250;</span> Environment
+    </p>
+    <p>
+      Your password is unaffected by this — it has long been stored encrypted in
+      the data folder, and this line is only read at the very first start.
+    </p>
+
+    <h3>Updating to a new version</h3>
+    <p>
+      FlowBridge tells you itself when there is something new: at the top right
+      it then says <strong>Update available</strong> with the number. Clicking
+      it checks immediately instead of waiting for the next round.
+    </p>
+    <p>
+      You fetch it by <strong>entering the number</strong>. So not through a
+      button, but through a line or a field.
+    </p>
+
+    <h4>Route A — in the project</h4>
+    <p class="path">Project <span class="sep">&#8250;</span> flowbridge <span class="sep">&#8250;</span> Action <span class="sep">&#8250;</span> Edit</p>
+    <p>
+      Change the <code class="inline">image</code> line to the number FlowBridge
+      reported — so
+    </p>
+    <p class="path">image: cheetahlab/flowbridge:latest</p>
+    <p>becomes, for example</p>
+    <p class="path">image: cheetahlab/flowbridge:2026.08.16-46</p>
+    <p>Save, then build again:</p>
+    <p class="path">Project <span class="sep">&#8250;</span> flowbridge <span class="sep">&#8250;</span> Action <span class="sep">&#8250;</span> Build</p>
+
+    <h4>Route B — via the registry</h4>
+    <p>
+      First fetch the new image: <strong>Registry</strong>, search for
+      <code class="inline">cheetahlab/flowbridge</code>,
+      <strong>Download</strong>, and this time pick the <strong>new
+      number</strong> rather than <code class="inline">latest</code>.
+    </p>
+    <p>
+      Then replace the old container: under <strong>Container</strong> stop and
+      delete <code class="inline">flowbridge</code>, then under
+      <strong>Image</strong> start the new one with <strong>Run</strong> — with
+      the same settings as the first time.
+    </p>
+    <div class="note">
+      <span class="label">Your data survives this</span>
+      <p>
+        Deleting affects only the container, not the
+        <code class="inline">data</code> folder. Configuration, password and
+        remembered setpoints live there and outlast the exchange.
+      </p>
+      <p>
+        That this route is more cumbersome lies in the nature of the thing: a
+        container is bound to one image. That is exactly what a project takes
+        off your hands — it remembers the settings and swaps only the image.
+      </p>
+    </div>
+
+    <p>
+      Your settings and credentials live in the
+      <code class="inline">data</code> folder and are kept throughout. Whether it
+      worked is shown at the bottom right in FlowBridge: the running version is
+      displayed there.
+    </p>
+
+    <div class="warn">
+      <span class="label">Why the number and not <code class="inline">latest</code></span>
+      <p>
+        Because with <code class="inline">latest</code> the NAS checks whether
+        it already has an image <em>of that name</em> — and if so, takes the one
+        it has. The container restarts, everything looks right — and you carry
+        on running the old version. That is the unpleasant kind of fault,
+        because it does not announce itself.
+      </p>
+      <p>
+        A version number, by contrast, the NAS has never seen. It <em>has</em>
+        to fetch it. That is why this is the route that always works.
+      </p>
+      <p>
+        There is also <strong>Image &#8250; Update</strong>, and that fetches
+        too. Only, the <em>Update available</em> hint next to the image appears
+        just once the NAS has looked of its own accord — which it does on its
+        own schedule, not when you open the page. Shortly after a new version
+        there is often nothing there yet, although there has long been
+        something. Entering the number waits for nobody.
+      </p>
+    </div>
+
+    <div class="warn">
+      <span class="label">Do not use &#8222;Reset&#8220;</span>
+      <p>
+        The obvious choice would be <strong>Action &#8250; Reset</strong>. That
+        fetches <em>nothing</em> — it only restarts, with the same image as
+        before.
+      </p>
+    </div>
+
+    <div class="note">
+      <span class="label">Going back to an older version</span>
+      <p>
+        Should a new version break something: the same line, only with the old
+        number.
+      </p>
+      <p class="path">image: cheetahlab/flowbridge:2026.08.16-39</p>
+      <p>
+        Version numbers are set <strong>immutable</strong> on Docker Hub — under
+        a number once given lies exactly the same image forever. A rollback
+        therefore takes you reliably to the state that ran before, not to
+        something that merely goes by the same name.
+      </p>
+      <p>
+        <strong>Do not switch back to <code class="inline">latest</code></strong>
+        while doing so. It sounds obvious, but it throws you back silently:
+        under that name the NAS still holds whatever version you last fetched
+        through it — possibly months old. Stay with the number and enter the new
+        one next time. You get the update hints regardless; those come from
+        FlowBridge itself.
+      </p>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ============ BUILD IT YOURSELF ============ -->
+  <section>
+    <p class="eyebrow">Route C — for the curious</p>
+    <h2>Building from source yourself</h2>
+    <p>
+      FlowBridge is free software, the complete source is open. Whoever wants to
+      look inside or change something builds the image themselves — then nothing
+      runs at your place that you did not compile yourself.
+    </p>
+    <p>
+      This is <strong>not a third installation route for the NAS</strong>:
+      building happens on a machine with Docker and Git, not in Container
+      Manager. For normal operation it gains you nothing — the finished image is
+      the same.
+    </p>
+
+    <div class="code">
+      <div class="code-head"><span>on your own machine</span><span>Docker and Git required</span></div>
+<pre><span class="c"># fetch the source</span>
+git clone https://github.com/CheetahLab/FlowBridge.git
+cd FlowBridge
+
+<span class="c"># enable the version hook - otherwise the interface</span>
+<span class="c"># will later report an outdated build</span>
+git config core.hooksPath scripts/githooks
+
+<span class="c"># build and start</span>
+docker compose -f docker/flowbridge/compose.build.yaml up -d --build</pre>
+    </div>
+
+    <p>
+      After that the procedure is the same as above: open the interface in the
+      browser, enter the EcoFlow keys and the broker.
+    </p>
+
+    <div class="note">
+      <span class="label">Where everything else is described</span>
+      <p>
+        The repository <code class="inline">CheetahLab/FlowBridge</code> on
+        GitHub carries a detailed description: which file does what, how the
+        tests run, what the EcoFlow interface provides — and what it does not.
+      </p>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ============ TROUBLESHOOTING ============ -->
+  <section>
+    <p class="eyebrow">When it sticks</p>
+    <h2>Troubleshooting</h2>
+    <p>Click on whatever matches your case.</p>
+
+    <div class="trouble">
+
+      <details>
+        <summary>The interface does not come up at all</summary>
+        <div class="details-body">
+          <p>
+            First check in Container Manager whether the container really shows
+            <strong>Running</strong>. If it keeps restarting, the
+            <strong>Log</strong> tab helps — the cause is stated there in plain
+            words.
+          </p>
+          <p>
+            If it runs but the browser does not get through, check the IP
+            address. Perhaps port <code class="inline">8081</code> is already
+            taken by another service. Then change the <em>left</em> number, to
+            <code class="inline">8091</code> say — on route A in the project file
+            (<code class="inline">"8091:8080"</code>), on route B in the port
+            settings of the container. Afterwards call the address with
+            <code class="inline">:8091</code>.
+          </p>
+        </div>
+      </details>
+
+      <details>
+        <summary>&#8222;Test connection&#8220; fails</summary>
+        <div class="details-body">
+          <p>Almost always one of three causes:</p>
+          <ul>
+            <li>
+              A space slipped in when copying the keys — at the front or the
+              back. Best to paste them again.
+            </li>
+            <li>
+              The power station belongs to a <strong>different EcoFlow
+              account</strong> than the one you generated the keys for.
+            </li>
+            <li>
+              The device is currently offline and unreachable for the cloud.
+              Check in the EcoFlow app whether it appears there.
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <details>
+        <summary>Readings arrive but do not reach the broker</summary>
+        <div class="details-body">
+          <p>
+            Then the EcoFlow side is up and the local one is not. Check the IP
+            and port of the broker and whether it demands credentials.
+          </p>
+          <p>
+            Typical case: Mosquitto with
+            <code class="inline">allow_anonymous false</code>. Then you need a
+            user name and password in FlowBridge as well.
+          </p>
+        </div>
+      </details>
+
+      <details>
+        <summary>Password forgotten</summary>
+        <div class="details-body">
+          <p>
+            No drama, that can be reset. In File Station open this file:
+          </p>
+          <p class="path">docker <span class="sep">&#8250;</span> flowbridge <span class="sep">&#8250;</span> data <span class="sep">&#8250;</span> config.yaml</p>
+          <p>
+            Delete the <code class="inline">auth:</code> section in it — together
+            with all the indented lines directly below it. Save, restart the
+            container. On the next visit FlowBridge asks for a new password
+            again; everything else is preserved.
+          </p>
+        </div>
+      </details>
+
+      <details>
+        <summary>None of this helps — send a diagnostics package</summary>
+        <div class="details-body">
+          <p>
+            For that there is the <strong>Diagnostics</strong> card in
+            <strong>Settings</strong>. The order matters:
+          </p>
+          <ol>
+            <li>Switch logging on</li>
+            <li>Trigger the fault once more</li>
+            <li>Download the diagnostics package and send it by e-mail</li>
+          </ol>
+          <p>
+            It contains the version, the state of all connections and the log —
+            everything needed for remote analysis.
+          </p>
+          <p>
+            <strong>Your keys and passwords are redacted in it</strong>, and
+            indeed before anything is written at all. You can send the file
+            without hesitation.
+          </p>
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      <strong>FlowBridge</strong> — MQTT bridge for portable power stations by ECOFLOW.
+    </p>
+    <p>
+      Free software under the GNU AGPL v3. © 2026 Dirk Hofher ·
+      <a href="https://www.hofherweb.de" target="_blank" rel="noopener noreferrer">www.hofherweb.de</a>
+    </p>
+    <p>
+      Independent project, not affiliated with EcoFlow. FlowBridge speaks
+      unencrypted HTTP — on your own network that is fine. Whoever wants to make
+      it reachable from the internet puts a reverse proxy with TLS in front.
+    </p>
+  </footer>
+
+</div>
+
+</body>
+</html>

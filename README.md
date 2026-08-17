@@ -28,9 +28,9 @@ whatever you run. Plus a web dashboard with live readings and control.
 your broker. To nobody else — except the update check, which fetches a public
 list of versions and can be switched off.
 
-> The interface is bilingual (English and German) and this README exists in
-> both languages. The in-depth guides in `docs/` and the source comments are
-> German only.
+> The interface, this README and the Synology setup guide exist in English and
+> German. The remaining reference documents in `docs/` and the source comments
+> are German only.
 
 ## Quick start
 
@@ -71,12 +71,14 @@ FlowBridge can switch outputs — without a password anyone on the same network
 could. The line may go once it has run; the password is then stored hashed in
 the data folder.
 
-> **Synology:** there is a detailed step-by-step guide —
-> [`docs/inbetriebnahme-synology.html`](docs/inbetriebnahme-synology.html)
-> (German). GitHub only shows HTML files as source, so download the file and
-> open it in a browser.
-> In Container Manager, the registry search finds `cheetahlab/flowbridge`
-> directly.
+> **Synology:** there is a detailed step-by-step guide, in English and German
+> — two installation routes, every dialog field named, and a troubleshooting
+> section:
+> **[docs/FlowBridge-Synology-EN.pdf](docs/FlowBridge-Synology-EN.pdf)** · [Deutsch](docs/FlowBridge-Synology-DE.pdf)
+>
+> The PDF opens right here on GitHub. The HTML source next to it
+> ([docs/FlowBridge-Synology-EN.html](docs/FlowBridge-Synology-EN.html)) is the same text; download it and open it in a
+> browser if you prefer that.
 
 ## Supported devices
 
@@ -136,7 +138,8 @@ Details in [`docs/quota-fields-river2.md`](docs/quota-fields-river2.md) (German)
 
 | | |
 |---|---|
-| [Commissioning on a Synology](docs/inbetriebnahme-synology.html) | step by step (German, HTML — download and open in a browser) |
+| **[Synology setup — English](docs/FlowBridge-Synology-EN.pdf)** | step by step, two routes, troubleshooting · also as [HTML](docs/FlowBridge-Synology-EN.html) |
+| **[Synology-Einrichtung — Deutsch](docs/FlowBridge-Synology-DE.pdf)** | the same guide in German · also as [HTML](docs/FlowBridge-Synology-DE.html) |
 | [MQTT topics](docs/mqtt-topics.md) | complete topic list (German) |
 | [Field comparison River 2 Pro](docs/quota-fields-river2.md) | what the interface delivers — and what it does not (German) |
 

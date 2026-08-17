@@ -29,9 +29,9 @@ und Steuerung.
 mit deinem Broker. Sonst mit niemandem — bis auf die Update-Prüfung, die eine
 öffentliche Versionsliste abruft und abschaltbar ist.
 
-> Die Oberfläche gibt es auf Deutsch und Englisch, dieses README ebenso. Die
-> ausführlichen Anleitungen in `docs/` und die Quelltextkommentare sind
-> deutsch.
+> Oberfläche, dieses README und die Synology-Anleitung gibt es auf Deutsch und
+> Englisch. Die übrigen Nachschlagedokumente in `docs/` und die
+> Quelltextkommentare sind deutsch.
 
 ## Schnellstart
 
@@ -73,12 +73,14 @@ kann Ausgänge schalten — ohne Passwort könnte das jeder im selben Netz. Die
 Zeile darf raus, sobald es einmal gelaufen ist; das Passwort liegt dann
 gehasht im Datenordner.
 
-> **Synology:** Es gibt eine ausführliche Schritt-für-Schritt-Anleitung —
-> [`docs/inbetriebnahme-synology.html`](docs/inbetriebnahme-synology.html).
-> GitHub zeigt HTML-Dateien nur als Quelltext an; die Datei also herunterladen
-> und im Browser öffnen.
-> Im Container Manager findet die Registrierungs-Suche `cheetahlab/flowbridge`
-> direkt.
+> **Synology:** Es gibt eine ausführliche Schritt-für-Schritt-Anleitung, auf
+> Deutsch und Englisch — zwei Installationswege, jedes Dialogfeld benannt, dazu
+> ein Abschnitt zur Fehlersuche:
+> **[docs/FlowBridge-Synology-DE.pdf](docs/FlowBridge-Synology-DE.pdf)** · [English](docs/FlowBridge-Synology-EN.pdf)
+>
+> Das PDF öffnet sich direkt hier auf GitHub. Daneben liegt derselbe Text als
+> HTML ([docs/FlowBridge-Synology-DE.html](docs/FlowBridge-Synology-DE.html)) — herunterladen und im Browser öffnen, wer das
+> lieber mag.
 
 ## Unterstützte Geräte
 
@@ -137,7 +139,8 @@ Einzelheiten in [`docs/quota-fields-river2.md`](docs/quota-fields-river2.md).
 
 | | |
 |---|---|
-| [Inbetriebnahme auf einer Synology](docs/inbetriebnahme-synology.html) | Schritt für Schritt (HTML — herunterladen und im Browser öffnen) |
+| **[Synology-Einrichtung — Deutsch](docs/FlowBridge-Synology-DE.pdf)** | Schritt für Schritt, zwei Wege, Fehlersuche · auch als [HTML](docs/FlowBridge-Synology-DE.html) |
+| **[Synology setup — English](docs/FlowBridge-Synology-EN.pdf)** | dieselbe Anleitung auf Englisch · auch als [HTML](docs/FlowBridge-Synology-EN.html) |
 | [MQTT-Topics](docs/mqtt-topics.md) | vollständige Topic-Liste |
 | [Feldabgleich River 2 Pro](docs/quota-fields-river2.md) | was die Schnittstelle liefert — und was nicht |
 

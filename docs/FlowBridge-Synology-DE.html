@@ -1,3 +1,9 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>FlowBridge auf der Synology einrichten</title>
 
 <style>
@@ -162,6 +168,8 @@
     letter-spacing: -.02em; line-height: 1.2; text-wrap: balance;
   }
   h3 { margin: 1.6rem 0 .55rem; font-size: 1.03rem; font-weight: 700; letter-spacing: -.01em; }
+  h4 { margin: 1.3rem 0 .4rem; font-size: .95rem; font-weight: 700;
+       color: var(--accent-ink); letter-spacing: -.01em; }
   h3:first-child { margin-top: 0; }
   p { margin: 0 0 1rem; text-wrap: pretty; }
   p:last-child { margin-bottom: 0; }
@@ -382,6 +390,8 @@
     * { animation: none !important; transition: none !important; }
   }
 </style>
+</head>
+<body>
 
 <div class="wrap">
 
@@ -409,8 +419,8 @@
 
     <div class="meta">
       <span class="chip">DSM 7 · Container Manager</span>
-      <span class="chip">ca. 20 Minuten</span>
-      <span class="chip">Alles zum Kopieren dabei</span>
+      <span class="chip">5 bis 10 Minuten</span>
+      <span class="chip">Zwei Wege — einer genügt</span>
     </div>
   </header>
 
@@ -515,10 +525,19 @@
 
   <hr class="rule">
 
-  <!-- ============ SCHRITTE ============ -->
+  <!-- ============ GEMEINSAMER ANFANG ============ -->
+  <section>
+    <p class="eyebrow">Los geht&#8217;s</p>
+    <h2>Zwei Schritte für alle, dann eine Entscheidung</h2>
+    <p>
+      Die nächsten beiden Schritte brauchst du in jedem Fall. Danach gibt es
+      zwei Wege, FlowBridge auf die NAS zu bekommen — <strong>einer
+      genügt</strong>, beide enden beim selben laufenden Container.
+    </p>
+  </section>
+
   <div class="steps">
 
-    <!-- 1 -->
     <section class="step">
       <span class="node">1</span>
       <h2>Zwei Ordner anlegen</h2>
@@ -567,40 +586,101 @@
       </div>
     </section>
 
-    <!-- 2 -->
-    <section class="step">
+    <section class="step is-last">
       <span class="node">2</span>
       <h2>Den Container Manager öffnen</h2>
       <div class="step-body">
         <p>
           Im Hauptmenü der NAS den <strong>Container Manager</strong> starten.
           Links in der Leiste findest du mehrere Einträge — <em>Übersicht</em>,
-          <em>Container</em>, <em>Abbild</em>, <em>Projekt</em>.
+          <em>Container</em>, <em>Abbild</em>, <em>Registrierung</em>,
+          <em>Projekt</em>.
         </p>
         <p>
-          Klick auf <strong>Projekt</strong>, dann oben auf die Schaltfläche
-          <strong>Erstellen</strong>.
+          Zwei davon führen zum Ziel: <strong>Projekt</strong> (Weg A) und
+          <strong>Registrierung</strong> (Weg B). Welchen du nimmst, steht
+          gleich darunter.
         </p>
-        <p class="path">Container Manager <span class="sep">›</span> Projekt <span class="sep">›</span> Erstellen</p>
-
-        <div class="note">
-          <span class="label">Warum Projekt und nicht Container</span>
-          <p>
-            Ein „Projekt“ nimmt eine fertige Beschreibung entgegen, in der alles
-            auf einmal steht: welches Abbild, welcher Port, welcher Ordner. Du musst
-            dich durch keine einzige Einstellungsseite klicken — den Text bekommst
-            du im nächsten Schritt zum Kopieren.
-          </p>
-        </div>
       </div>
     </section>
 
-    <!-- 3 -->
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ WEGWEISER ============ -->
+  <section>
+    <p class="eyebrow">Jetzt entscheiden</p>
+    <h2>Weg A oder Weg B?</h2>
+    <p>
+      Beide holen dasselbe Abbild von derselben Stelle. Der Unterschied ist
+      nur, <em>wie</em> die Einstellungen hineinkommen: als ein Textblock zum
+      Einfügen — oder geklickt durch mehrere Dialogseiten.
+    </p>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th></th><th>Weg A — mit Text</th><th>Weg B — über die Registrierung</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Dauer</td><td>etwa 5 Minuten</td><td>etwa 10 Minuten</td></tr>
+          <tr><td>Was du tust</td><td>einen Block kopieren, ein Wort ändern</td><td>Abbild suchen, dann Felder auf mehreren Seiten ausfüllen</td></tr>
+          <tr><td>Fehlerquellen</td><td>die Einrückung beim Einfügen</td><td>Port, Ordnerpfad und Variablennamen — jedes von Hand</td></tr>
+          <tr><td>Protokoll begrenzt</td><td><strong>ja</strong>, steht im Text</td><td><strong>nein</strong>, bietet der Assistent nicht an</td></tr>
+          <tr><td>Selbstüberwachung</td><td><strong>ja</strong></td><td>nein</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="warn">
+      <span class="label">Warum ich zu Weg A rate</span>
+      <p>
+        Nicht wegen der fünf Minuten. Der Textblock enthält zwei Einstellungen,
+        die der Assistent gar nicht anbietet: eine <strong>Begrenzung der
+        Protokolldateien</strong> (3&#160;&#215;&#160;10&#160;MB) und eine
+        <strong>Selbstüberwachung</strong>, an der die NAS merkt, wenn
+        FlowBridge zwar läuft, aber nicht mehr antwortet.
+      </p>
+      <p>
+        Ohne die Begrenzung wächst das Container-Protokoll unbegrenzt weiter —
+        auf einer NAS, die jahrelang durchläuft, ist das kein theoretisches
+        Problem.
+      </p>
+      <p>
+        Weg B ist trotzdem beschrieben: Manche mögen keine YAML-Blöcke, und wer
+        sehen will, was die NAS eigentlich einstellt, sieht es dort Feld für
+        Feld.
+      </p>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- ============ WEG A ============ -->
+  <section>
+    <p class="eyebrow">Weg A — empfohlen</p>
+    <h2>Mit fertigem Text</h2>
+    <p>
+      Du legst ein <strong>Projekt</strong> an und fügst eine fertige
+      Beschreibung ein. Darin steht alles auf einmal: welches Abbild, welcher
+      Port, welcher Ordner, welches Passwort.
+    </p>
+  </section>
+
+  <div class="steps">
+
     <section class="step">
-      <span class="node">3</span>
-      <h2>Das Projekt beschreiben</h2>
+      <span class="node">1</span>
+      <h2>Das Projekt anlegen</h2>
       <div class="step-body">
+        <p>
+          Im Container Manager links auf <strong>Projekt</strong>, dann oben
+          auf <strong>Erstellen</strong>.
+        </p>
+        <p class="path">Container Manager <span class="sep">&#8250;</span> Projekt <span class="sep">&#8250;</span> Erstellen</p>
         <p>Es öffnet sich eine Maske. Fülle sie so aus:</p>
+
 
         <div class="dialog">
           <div class="dialog-title">Projekt erstellen</div>
@@ -630,7 +710,7 @@
             <div class="drow">
               <span class="lbl">Großes Textfeld</span>
               <span class="val">
-                Bleibt noch leer — Inhalt kommt in Schritt 4
+                Bleibt noch leer — Inhalt kommt im nächsten Schritt
               </span>
             </div>
           </div>
@@ -645,12 +725,11 @@
             hochzuladen.
           </p>
         </div>
-      </div>
+            </div>
     </section>
 
-    <!-- 4 -->
     <section class="step">
-      <span class="node">4</span>
+      <span class="node">2</span>
       <h2>Diesen Text einfügen</h2>
       <div class="step-body">
         <p>
@@ -734,9 +813,8 @@
       </div>
     </section>
 
-    <!-- 5 -->
-    <section class="step">
-      <span class="node">5</span>
+    <section class="step is-last">
+      <span class="node">3</span>
       <h2>Durch den Assistenten und starten</h2>
       <div class="step-body">
         <p>
@@ -786,9 +864,199 @@
       </div>
     </section>
 
-    <!-- 6 -->
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ WEG B ============ -->
+  <section>
+    <p class="eyebrow">Weg B — der manuelle</p>
+    <h2>Über die Registrierung</h2>
+    <p>
+      Kein Text, dafür mehr Klicks: Du suchst das Abbild in der Registrierung,
+      lädst es herunter und stellst den Container über den Assistenten ein.
+    </p>
+    <div class="note">
+      <span class="label">Weg A schon erledigt?</span>
+      <p>
+        Dann überspring diesen Abschnitt und mach bei <strong>FlowBridge
+        einrichten</strong> weiter. Beide Wege zu gehen bringt nichts — der
+        Port wäre danach doppelt belegt.
+      </p>
+    </div>
+  </section>
+
+  <div class="steps">
+
     <section class="step">
-      <span class="node">6</span>
+      <span class="node">1</span>
+      <h2>Das Abbild herunterladen</h2>
+      <div class="step-body">
+        <p>
+          Im Container Manager links auf <strong>Registrierung</strong>. Oben
+          ist ein Suchfeld — trag dort ein:
+        </p>
+        <p class="path">cheetahlab/flowbridge</p>
+        <p>
+          Der Treffer erscheint nach ein paar Sekunden. Auswählen, dann auf
+          <strong>Herunterladen</strong>. Es fragt dich nach der Marke
+          („Tag“).
+        </p>
+
+        <div class="note">
+          <span class="label">Welche Marke?</span>
+          <p>
+            In der Liste steht <code class="inline">latest</code> ganz oben,
+            darunter Versionsnummern wie
+            <code class="inline">2026.08.16-46</code>. Fürs erste Mal ist
+            <code class="inline">latest</code> in Ordnung — das ist immer die
+            neueste.
+          </p>
+          <p>
+            <strong>Beim Aktualisieren später ist das anders</strong>: Dann
+            zählt die Nummer, und zwar in beiden Wegen. Warum, steht unten
+            unter <em>Auf eine neue Fassung aktualisieren</em>.
+          </p>
+        </div>
+
+        <p>
+          Der Fortschritt steht unter <strong>Abbild</strong>. Gut 200&#160;MB;
+          wenn die Zeile dort ohne Fortschrittsbalken dasteht, ist es fertig.
+        </p>
+      </div>
+    </section>
+
+    <section class="step">
+      <span class="node">2</span>
+      <h2>Den Container einstellen</h2>
+      <div class="step-body">
+        <p>
+          Links auf <strong>Abbild</strong>, das geladene auswählen, dann oben
+          auf <strong>Ausführen</strong>. Jetzt kommen die Seiten, auf denen
+          Weg A einfach einen Text hatte.
+        </p>
+
+        <div class="dialog">
+          <div class="dialog-title">Container erstellen</div>
+          <div class="dialog-rows">
+            <div class="drow">
+              <span class="lbl">Container-Name</span>
+              <span class="val">
+                <code class="inline">flowbridge</code>
+                <span class="hint">Kleinschreibung, keine Leerzeichen.</span>
+              </span>
+            </div>
+            <div class="drow">
+              <span class="lbl">Automatischer Neustart</span>
+              <span class="val">
+                einschalten
+                <span class="hint">Sonst startet FlowBridge nach einem Neustart der NAS nicht von selbst.</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <p>
+          Dann auf <strong>Erweiterte Einstellungen</strong> — ohne die fehlen
+          Port, Ordner und Passwort, und FlowBridge wäre weder erreichbar noch
+          würde es sich etwas merken.
+        </p>
+
+        <div class="dialog">
+          <div class="dialog-title">Erweiterte Einstellungen</div>
+          <div class="dialog-rows">
+            <div class="drow">
+              <span class="lbl">Port-Einstellungen</span>
+              <span class="val">
+                Lokaler Port <code class="inline">8081</code> &#8594; Container-Port <code class="inline">8080</code>
+                <span class="hint">Das Feld steht oft auf „Auto“ — das ergibt bei jedem Start eine andere Nummer. Trag 8081 fest ein.</span>
+              </span>
+            </div>
+            <div class="drow">
+              <span class="lbl">Ordner</span>
+              <span class="val">
+                <code class="inline">docker/flowbridge/data</code> &#8594; Einhängepfad <code class="inline">/config</code>
+                <span class="hint">Der <strong>data</strong>-Ordner aus Schritt 1, nicht der darüber. Mit Schreibrecht, nicht nur Lesen.</span>
+              </span>
+            </div>
+            <div class="drow">
+              <span class="lbl">Umgebung</span>
+              <span class="val">drei Variablen, siehe unten</span>
+            </div>
+          </div>
+        </div>
+
+        <p>Bei <strong>Umgebung</strong> legst du drei Einträge an:</p>
+
+        <div class="code">
+          <div class="code-head"><span>Umgebungsvariablen</span><span>je Zeile: Name, dann Wert</span></div>
+<pre><span class="k">FLOWBRIDGE_CONFIG</span>     <span class="v">/config/config.yaml</span>
+<span class="k">TZ</span>                    <span class="v">Europe/Berlin</span>
+<span class="k">FLOWBRIDGE_PASSWORD</span>   <mark>dein-eigenes-passwort</mark></pre>
+        </div>
+
+        <div class="warn">
+          <span class="label">Das Passwort nicht weglassen</span>
+          <p>
+            FlowBridge kann deinen Speicher nicht nur auslesen, sondern auch
+            steuern — Laden starten, Ausgänge schalten. Ohne diese Variable
+            läuft es beim ersten Start ungeschützt im Netz, bis jemand im
+            Browser eines vergibt.
+          </p>
+          <p>
+            Hier <strong>ohne</strong> Anführungszeichen — anders als im
+            Textblock von Weg A. Der Assistent nimmt den Wert wörtlich,
+            Anführungszeichen würden Teil des Passworts.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="step is-last">
+      <span class="node">3</span>
+      <h2>Starten</h2>
+      <div class="step-body">
+        <p>
+          <strong>Weiter</strong>, die Zusammenfassung kurz überfliegen, dann
+          <strong>Fertig</strong>. Lass das Häkchen bei „Container nach dem
+          Erstellen ausführen“ gesetzt.
+        </p>
+        <p>
+          Unter <strong>Container</strong> sollte
+          <code class="inline">flowbridge</code> gleich darauf auf
+          <strong>Läuft</strong> stehen.
+        </p>
+
+        <div class="note">
+          <span class="label">Steht dort „Beendet“?</span>
+          <p>
+            Dann sagt der Reiter <strong>Protokoll</strong> im Klartext, warum.
+            Der häufigste Fall ist der Ordner: Zeigt die Einhängung nicht auf
+            <code class="inline">data</code> oder fehlt das Schreibrecht, kann
+            FlowBridge seine Konfiguration nicht ablegen.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <hr class="rule">
+
+  <!-- ============ EINRICHTEN (GEMEINSAM) ============ -->
+  <section>
+    <p class="eyebrow">Für beide Wege gleich</p>
+    <h2>FlowBridge einrichten</h2>
+    <p>
+      Der Container läuft — er weiß nur noch nichts von deinem Speicher. Das
+      kommt jetzt, und zwar im Browser.
+    </p>
+  </section>
+
+  <div class="steps">
+
+    <section class="step">
+      <span class="node">1</span>
       <h2>Oberfläche zum ersten Mal öffnen</h2>
       <div class="step-body">
         <p>
@@ -801,8 +1069,9 @@
           dieselbe, mit der du auch DSM aufrufst.
         </p>
         <p>
-          Es erscheint eine Anmeldung. Gib dort das Passwort ein, das du in
-          Schritt 4 eingetragen hast.
+          Es erscheint eine Anmeldung. Gib dort das Passwort ein, das du beim
+          Einrichten als <code class="inline">FLOWBRIDGE_PASSWORD</code> gesetzt
+          hast.
         </p>
 
         <div class="note">
@@ -816,9 +1085,8 @@
       </div>
     </section>
 
-    <!-- 7 -->
     <section class="step">
-      <span class="node">7</span>
+      <span class="node">2</span>
       <h2>EcoFlow und Broker eintragen</h2>
       <div class="step-body">
         <p>
@@ -887,9 +1155,8 @@
       </div>
     </section>
 
-    <!-- 8 -->
     <section class="step is-last">
-      <span class="node">8</span>
+      <span class="node">3</span>
       <h2>Nachsehen, ob es fließt</h2>
       <div class="step-body">
         <p>
@@ -926,12 +1193,18 @@
     <p class="eyebrow">Danach</p>
     <h2>Zwei Handgriffe für später</h2>
 
-    <h3>Das Passwort aus der Projektdatei nehmen</h3>
+    <h3>Das Passwort aus den Einstellungen nehmen</h3>
     <p>
-      Dort steht es im Klartext. Sobald FlowBridge läuft, kannst du die Zeile
-      <code class="inline">FLOWBRIDGE_PASSWORD</code> löschen:
+      Dort steht es im Klartext. Sobald FlowBridge einmal gelaufen ist, kannst
+      du die Zeile <code class="inline">FLOWBRIDGE_PASSWORD</code> löschen —
+      je nachdem, welchen Weg du gegangen bist:
     </p>
-    <p class="path">Projekt <span class="sep">›</span> flowbridge <span class="sep">›</span> Aktion <span class="sep">›</span> Bearbeiten</p>
+    <p class="path">
+      <strong>Weg A:</strong> Projekt <span class="sep">›</span> flowbridge <span class="sep">›</span> Aktion <span class="sep">›</span> Bearbeiten
+    </p>
+    <p class="path">
+      <strong>Weg B:</strong> Container <span class="sep">›</span> flowbridge <span class="sep">›</span> Details <span class="sep">›</span> Umgebung
+    </p>
     <p>
       Dein Passwort bleibt davon unberührt — es liegt längst verschlüsselt in
       den Daten und wird von dieser Zeile nur beim allerersten Start gelesen.
@@ -944,9 +1217,11 @@
       prüft sofort nach, statt auf den nächsten Durchlauf zu warten.
     </p>
     <p>
-      Geholt wird es, indem du <strong>die Nummer in die Projektdatei
-      einträgst</strong>. Also nicht über einen Knopf, sondern über eine Zeile:
+      Geholt wird es, indem du <strong>die Nummer einträgst</strong>. Also
+      nicht über einen Knopf, sondern über eine Zeile beziehungsweise ein Feld.
     </p>
+
+    <h4>Weg A — im Projekt</h4>
     <p class="path">Projekt <span class="sep">›</span> flowbridge <span class="sep">›</span> Aktion <span class="sep">›</span> Bearbeiten</p>
     <p>
       Dort die <code class="inline">image</code>-Zeile auf die Nummer ändern,
@@ -954,9 +1229,37 @@
     </p>
     <p class="path">image: cheetahlab/flowbridge:latest</p>
     <p>wird also zum Beispiel</p>
-    <p class="path">image: cheetahlab/flowbridge:2026.08.16-42</p>
+    <p class="path">image: cheetahlab/flowbridge:2026.08.16-46</p>
     <p>Speichern, dann neu erstellen:</p>
     <p class="path">Projekt <span class="sep">›</span> flowbridge <span class="sep">›</span> Aktion <span class="sep">›</span> Erstellen</p>
+
+    <h4>Weg B — über die Registrierung</h4>
+    <p>
+      Erst das neue Abbild holen: <strong>Registrierung</strong>,
+      <code class="inline">cheetahlab/flowbridge</code> suchen,
+      <strong>Herunterladen</strong>, und dabei wieder die
+      <strong>neue Nummer</strong> wählen statt
+      <code class="inline">latest</code>.
+    </p>
+    <p>
+      Dann den alten Container ersetzen: unter <strong>Container</strong>
+      <code class="inline">flowbridge</code> anhalten und löschen, danach unter
+      <strong>Abbild</strong> das neue mit <strong>Ausführen</strong> starten —
+      mit denselben Einstellungen wie beim ersten Mal.
+    </p>
+    <div class="note">
+      <span class="label">Deine Daten bleiben dabei</span>
+      <p>
+        Das Löschen betrifft nur den Container, nicht den
+        <code class="inline">data</code>-Ordner. Konfiguration, Passwort und
+        gemerkte Sollwerte liegen dort und überstehen den Austausch.
+      </p>
+      <p>
+        Dass dieser Weg umständlicher ist, liegt in der Sache: Ein Container
+        hängt fest an einem Abbild. Genau das nimmt einem ein Projekt ab — es
+        merkt sich die Einstellungen und tauscht nur das Abbild aus.
+      </p>
+    </div>
     <p>
       Deine Einstellungen und Zugangsdaten liegen im
       <code class="inline">data</code>-Ordner und bleiben dabei erhalten.
@@ -1021,6 +1324,54 @@
 
   <hr class="rule">
 
+  <!-- ============ SELBST BAUEN ============ -->
+  <section>
+    <p class="eyebrow">Weg C — für Neugierige</p>
+    <h2>Aus dem Quelltext selbst bauen</h2>
+    <p>
+      FlowBridge ist freie Software, der vollständige Quelltext liegt offen.
+      Wer hineinsehen oder etwas ändern will, baut sich das Abbild selbst —
+      dann läuft bei dir nichts, was du nicht selbst übersetzt hast.
+    </p>
+    <p>
+      Das ist <strong>kein dritter Installationsweg für die NAS</strong>:
+      Gebaut wird an einem Rechner mit Docker und Git, nicht im Container
+      Manager. Für den normalen Betrieb bringt es nichts — das fertige Abbild
+      ist dasselbe.
+    </p>
+
+    <div class="code">
+      <div class="code-head"><span>am eigenen Rechner</span><span>Docker und Git nötig</span></div>
+<pre><span class="c"># Quelltext holen</span>
+git clone https://github.com/CheetahLab/FlowBridge.git
+cd FlowBridge
+
+<span class="c"># Versionsnummer-Hook einschalten - sonst meldet die</span>
+<span class="c"># Oberflaeche spaeter eine veraltete Fassung</span>
+git config core.hooksPath scripts/githooks
+
+<span class="c"># bauen und starten</span>
+docker compose -f docker/flowbridge/compose.build.yaml up -d --build</pre>
+    </div>
+
+    <p>
+      Danach ist der Ablauf derselbe wie oben: Oberfläche im Browser öffnen,
+      EcoFlow-Schlüssel und Broker eintragen.
+    </p>
+
+    <div class="note">
+      <span class="label">Wo alles Weitere steht</span>
+      <p>
+        Das Verzeichnis <code class="inline">CheetahLab/FlowBridge</code> auf
+        GitHub trägt eine ausführliche Beschreibung: welche Datei wofür da ist,
+        wie die Tests laufen, was die Schnittstelle von EcoFlow hergibt — und
+        was nicht.
+      </p>
+    </div>
+  </section>
+
+  <hr class="rule">
+
   <!-- ============ FEHLERSUCHE ============ -->
   <section>
     <p class="eyebrow">Wenn es klemmt</p>
@@ -1040,9 +1391,11 @@
           <p>
             Läuft er, aber der Browser kommt nicht durch, kontrollier die IP-Adresse.
             Vielleicht ist auch Port <code class="inline">8081</code> schon von einem
-            anderen Dienst belegt. Dann in der Projektdatei die <em>linke</em> Zahl
-            ändern, etwa auf <code class="inline">"8091:8080"</code>, und die Adresse
-            entsprechend mit <code class="inline">:8091</code> aufrufen.
+            anderen Dienst belegt. Dann die <em>linke</em> Zahl ändern, etwa auf
+            <code class="inline">8091</code> — bei Weg A in der Projektdatei
+            (<code class="inline">"8091:8080"</code>), bei Weg B in den
+            Port-Einstellungen des Containers. Danach die Adresse mit
+            <code class="inline">:8091</code> aufrufen.
           </p>
         </div>
       </details>
@@ -1143,3 +1496,6 @@
   </footer>
 
 </div>
+
+</body>
+</html>

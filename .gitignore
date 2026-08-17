@@ -12,8 +12,12 @@ frontend/*.tsbuildinfo
 # Rotierte Diagnose-Protokolle (flowbridge.log.1, .2)
 *.log.*
 
-# Druckfassung von docs/inbetriebnahme-synology.html.
-# Nicht eingecheckt: Das PDF aendert sich bei jeder Textzeile komplett, und
-# eine eingecheckte Fassung, die nicht mehr zum HTML passt, ist schlechter
-# als gar keine.
-docs/FlowBridge-Synology-Anleitung.pdf
+# Die Synology-Anleitungen liegen als HTML UND als PDF im Repo, je auf
+# Deutsch und Englisch. Das PDF war frueher ausgeschlossen, weil eine
+# eingecheckte Fassung veralten kann, ohne dass es auffaellt.
+#
+# Es liegt jetzt trotzdem bei: GitHub stellt PDF im Browser dar, HTML dagegen
+# nur als Quelltext - fuer jemanden, der bloss wissen will, wie er den
+# Container zum Laufen bringt, ist das der Unterschied zwischen brauchbar und
+# nutzlos. Gegen das Veralten hilft nicht der Ausschluss, sondern die Pruefung:
+# scripts/pre-commit.d/ meldet ein PDF, das aelter ist als sein HTML.
