@@ -12,7 +12,7 @@ contact_links:
       belong in Discussions.
 
   - name: Sicherheitslücke melden / Report a security issue
-    url: mailto:flowbridge@hofherweb.de
+    url: mailto:dirk@cheetahlab.de
     about: >-
       Bitte NICHT als öffentliches Issue, sondern per E-Mail. / Please report
       privately by e-mail instead of opening a public issue.

@@ -5,10 +5,26 @@ REST-Polling (ecoflow_client.get_quota_all) ist zuverlaessig, aber traege -
 in der Praxis (12.08.2026 beobachtet) kann es >1 Minute dauern, bis eine
 Aenderung dort sichtbar wird. Der MQTT-Push vom Geraet an die App ist dagegen
 nahezu in Echtzeit. FlowBridge nutzt REST weiterhin fuer den initialen
-Vollzustand und fuer Set-Commands, aber Live-Updates kommen ab jetzt primaer
-ueber diese MQTT-Verbindung; die REST-Poll-Schleife bleibt als traeger
-Sicherheitsnetz (falls die MQTT-Verbindung kurz haengt oder ein Feld nicht
-gepusht wird).
+Vollzustand und fuer Set-Commands, aber Live-Updates kommen ueber diese
+MQTT-Verbindung.
+
+WICHTIG, und lange falsch verstanden: quota/all ist KEIN zweiter Messweg.
+Es ist die Kopie des letzten Push. Bleibt der Push aus, liefert REST
+unbegrenzt lange dieselben alten Zahlen weiter - erfolgreich, mit HTTP 200,
+und mit jedem Aufruf frisch gestempelt. Zweimal im Feld nachgewiesen:
+22 Stunden "online" nach einem Stromausfall (16.08.2026) und rund zwanzig
+Abfragen mit unveraendertem AC-Eingang, waehrend das Geraet nachweislich von
+100 auf 200 W hochgeregelt hatte (23.08.2026, Push-Luecke von 10 Minuten).
+
+Wie oft das Geraet pusht, bestimmt EcoFlow - und es aendert sich: Bis
+20.08.2026, 22:28 lag der Median bei 3,0 s, danach bei 899 s. Umgeschlagen
+ist es mit einer Serie von vier `setReportCfg` (s. _handle_message), ohne
+Zutun von FlowBridge. Auf diese Rate darf sich also nichts verlassen.
+
+Der REST-Resync faengt also NICHT auf, dass ein Feld nicht gepusht wird - er
+holt nur nach, was waehrend eines Verbindungsabbruchs an uns vorbeiging.
+Alles Weitere ist eine Frage der Ehrlichkeit statt der Technik: Das Alter
+jedes Messwerts wird mitgefuehrt und angezeigt (s. app._MESSWERTE).
 
 Nachrichtenformat laut Dev-Portal-Doku: jede quota-Message traegt EINEN
 Modul-Ausschnitt (typeCode) mit un-praefigierten Feldnamen, z.B.

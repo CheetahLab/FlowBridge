@@ -2,17 +2,13 @@
 
 Copyright © 2026 Dirk Hofher
 
-FlowBridge ist freie Software: Du kannst sie weitergeben und/oder verändern,
-unter den Bedingungen der **GNU Affero General Public License, Version 3**,
-wie von der Free Software Foundation veröffentlicht.
+FlowBridge steht unter der **Apache-Lizenz, Version 2.0**. Den vollständigen
+Text findest du in [`LICENSE`](LICENSE) und unter
+<https://www.apache.org/licenses/LICENSE-2.0>.
 
-FlowBridge wird in der Hoffnung verteilt, dass sie nützlich ist, aber **ohne
-jede Gewährleistung** — sogar ohne die stillschweigende Gewährleistung der
-Marktreife oder der Eignung für einen bestimmten Zweck. Einzelheiten stehen in
-der GNU Affero General Public License.
-
-Den vollständigen Lizenztext findest du in [`LICENSE`](LICENSE) und unter
-<https://www.gnu.org/licenses/agpl-3.0.html>.
+Die Software wird **ohne jede Gewährleistung** bereitgestellt — im Sinne der
+Lizenz „AS IS", ohne ausdrückliche oder stillschweigende Zusicherungen
+irgendeiner Art. Einzelheiten stehen in Abschnitt 7 und 8 der Lizenz.
 
 ---
 
@@ -21,32 +17,37 @@ Den vollständigen Lizenztext findest du in [`LICENSE`](LICENSE) und unter
 **Für dich als Anwender ändert sich nichts.** Nutzen, betreiben, anpassen,
 für dich behalten — alles frei, ohne Bedingungen und ohne Kosten.
 
-**Wer FlowBridge verändert und weitergibt**, muss den geänderten Quelltext
-unter derselben Lizenz zugänglich machen. Der Zusatz „Affero" schließt dabei
-den Fall ein, dass jemand eine veränderte Fassung nur als Dienst betreibt,
-ohne sie zu verteilen: Auch dann steht den Nutzern dieses Dienstes der
-Quelltext zu.
+**Wer FlowBridge weitergibt**, in eigene Software einbaut oder als Dienst
+betreibt, darf das ebenfalls frei — auch gewerblich und auch in geschlossenen
+Produkten. Zu erfüllen sind die drei Auflagen aus Abschnitt 4 der Lizenz:
 
-Der Gedanke dahinter: FlowBridge ist aus freien Bausteinen entstanden — 23
-Bibliotheken, alle permissiv lizenziert (siehe
-[`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md)). Was daraus geworden ist,
-soll frei bleiben. Verbesserungen sollen bei denen ankommen, die sie
-gebrauchen können, statt in einem geschlossenen Produkt zu verschwinden.
+* die Lizenz mitgeben,
+* diese Datei (`NOTICE.md`) mitgeben,
+* an veränderten Dateien vermerken, dass sie verändert wurden.
 
-**Es gibt keine zweite Lizenz.** FlowBridge steht unter der AGPL, und dabei
-bleibt es — auch für gewerbliche Nutzung. Wer die Bedingungen einhält, darf
-FlowBridge im Betrieb einsetzen, ohne jemanden zu fragen und ohne zu zahlen.
-Wer sie nicht einhalten möchte, kann sich das nicht abkaufen.
+Der Quelltext muss dabei **nicht** offengelegt werden.
 
-Das ist eine bewusste Festlegung: Beiträge Dritter kommen unter derselben
-Lizenz herein und bleiben dort. Niemand muss Rechte abtreten, damit sie
-angenommen werden können.
+**Warum Apache-2.0 und nicht Copyleft?** FlowBridge soll die Vorlage für
+weitere freie Werkzeuge im Smarthome-Umfeld sein. Dort wird eingebaut, nicht
+nur benutzt — und eine Lizenz, die beim Einbauen Fragen aufwirft, wird schlicht
+umgangen. Der Preis dafür ist bewusst in Kauf genommen: Es gibt keine Pflicht,
+Verbesserungen zurückzugeben.
+
+**Es gibt keine zweite Lizenz.** Sie wird auch nicht gebraucht: Apache-2.0
+erlaubt schon alles, wofür man sonst eine kommerzielle Lizenz kauft. Beiträge
+Dritter kommen unter derselben Lizenz herein (Abschnitt 5); niemand muss
+Rechte abtreten, damit sie angenommen werden können.
+
+Die Lizenz gewährt außerdem ausdrücklich **Patentrechte** (Abschnitt 3) — der
+Punkt, an dem sich Apache-2.0 von MIT und BSD unterscheidet und der Firmen die
+Übernahme überhaupt erst erlaubt.
 
 ## Name und Logo
 
 Die Lizenz deckt den Quelltext. Der Name **FlowBridge** und die Bildmarken
 (`assets/brand/`, `frontend/public/flowbridge-mark.svg`) sind davon **nicht**
-erfasst.
+erfasst — Abschnitt 6 der Lizenz stellt das ausdrücklich klar: Marken werden
+nicht mitlizenziert.
 
 Mitgeliefert sind sie trotzdem, und zwar mit Absicht: Wer FlowBridge abwandelt
 und weitergibt, soll das Zeichen **ersetzen** können, ohne es sich erst

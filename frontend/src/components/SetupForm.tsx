@@ -9,13 +9,24 @@ interface Props {
   language: string;
   theme: string;
   onSaved: () => void;
+  /** Steht die Kachel unter einem Tab, der schon "Einrichtung" heisst?
+   *  Dann faellt der eigene Titel weg und die Schluessel bekommen stattdessen
+   *  eine Abschnitts-Ueberschrift wie Geraete und MQTT. */
+  alsAbschnitt?: boolean;
 }
 
 // Vom EisBaer vorgegeben, nicht vom MQTT-Standard. Serverseitig gilt
 // dieselbe Grenze - das Formular ist nur die freundlichere Haelfte davon.
 const MIN_CLIENT_ID_LAENGE = 10;
 
-export default function SetupForm({ t, config, language, theme, onSaved }: Props) {
+export default function SetupForm({
+  t,
+  config,
+  language,
+  theme,
+  onSaved,
+  alsAbschnitt = false,
+}: Props) {
   const [accessKey, setAccessKey] = useState(config.ecoflow.access_key);
   const [secretKey, setSecretKey] = useState(config.ecoflow.secret_key);
   const [mqttHost, setMqttHost] = useState(config.mqtt.host);
@@ -118,9 +129,34 @@ export default function SetupForm({ t, config, language, theme, onSaved }: Props
 
   return (
     <div className="fb-card fb-card-wide">
-      <h2>{t.setupTitle}</h2>
+      {/* Der Kachel-Titel entfaellt, sobald die Kachel unter einem Tab steht,
+          der schon "Einrichtung" heisst. Sonst stuende das Wort dreimal
+          untereinander: Seitentitel, Tab, Kachel - und keine der drei Zeilen
+          saegte etwas, was die vorige nicht schon gesagt hat.
+          Bei der Ersteinrichtung gibt es keinen Tab darueber; dort bleibt er. */}
+      {!alsAbschnitt && <h2>{t.setupTitle}</h2>}
       <p className="fb-muted">{t.setupHint}</p>
+      {/* Wegweiser statt Sackgasse: "Gib deinen Access-Key ein" hilft nur dem,
+          der schon einen hat. Wer keinen hat, steht vor der ersten Zeile der
+          Einrichtung und weiss nicht weiter - und genau dort bricht man ab. */}
+      <p className="fb-muted fb-setup-wegweiser">
+        {t.setupKeysHint}{" "}
+        <a href="https://developer-eu.ecoflow.com/" target="_blank" rel="noopener noreferrer">
+          developer-eu.ecoflow.com
+        </a>
+      </p>
 
+      {/* Zwei Spalten: links, was zu EcoFlow gehoert (Schluessel und Geraete),
+          rechts der eigene Broker. Untereinander war das eine Kachel, durch
+          die man scrollen musste, obwohl beide Haelften unabhaengig sind -
+          man richtet die eine ein und die andere danach. */}
+      <div className="fb-setup-cols">
+        <div>
+      {/* "EcoFlow" statt "Einrichtung": Damit tragen alle drei Abschnitte der
+          Kachel eine Ueberschrift derselben Ebene (EcoFlow / Geraete / MQTT),
+          und jede sagt, WORUM es geht statt WO man ist. Die Versalien macht
+          die Karte selbst (.fb-card h3). */}
+      {alsAbschnitt && <h3 className="fb-setup-col-head">EcoFlow</h3>}
       <label className="fb-field">
         <span>{t.accessKey}</span>
         <input value={accessKey} onChange={(e) => setAccessKey(e.target.value)} autoComplete="off" />
@@ -149,9 +185,13 @@ export default function SetupForm({ t, config, language, theme, onSaved }: Props
               {t.removeDevice}
             </button>
           </div>
+          {/* Der blosse Modellname stand hier ohne Zusammenhang - man sah
+              "RIVER 2 Pro" und musste raten, ob das eine Eingabe, ein
+              Vorschlag oder eine Rueckmeldung ist. Es ist eine Rueckmeldung:
+              Das hat EcoFlow zu dieser Seriennummer gemeldet. */}
           {device.model && (
             <p className="fb-muted fb-device-model">
-              {device.model}
+              {t.deviceDetected}: <strong>{device.model}</strong>
               {device.controllable === false && ` · ${t.monitorOnly}`}
             </p>
           )}
@@ -172,7 +212,18 @@ export default function SetupForm({ t, config, language, theme, onSaved }: Props
       </div>
       {discoverError && <p className="fb-status-error">{discoverError}</p>}
 
-      <h3>MQTT</h3>
+      <div className="fb-actions">
+        <button type="button" className="fb-toggle" onClick={handleTest} disabled={!accessKey || !secretKey}>
+          {t.testConnection}
+        </button>
+      </div>
+      {testStatus && <p className="fb-status-ok">{testStatus}</p>}
+      {testError && <p className="fb-status-error">{testError}</p>}
+
+        </div>
+
+        <div>
+      <h3 className="fb-setup-col-head">MQTT</h3>
       <label className="fb-field">
         <span>{t.mqttHost}</span>
         <input value={mqttHost} onChange={(e) => setMqttHost(e.target.value)} />
@@ -209,10 +260,18 @@ export default function SetupForm({ t, config, language, theme, onSaved }: Props
         <input value={mqttPassword} onChange={(e) => setMqttPassword(e.target.value)} autoComplete="off" />
       </label>
 
+        </div>
+      </div>
+
+      {/* Die Knoepfe gehoeren unter BEIDE Spalten: Gespeichert wird alles
+          zusammen, und "Verbindung testen" prueft die EcoFlow-Seite. */}
+      {/* Nur noch EIN Knopf unter beiden Spalten: Gespeichert wird die ganze
+          Einrichtung auf einmal. Der Pruefknopf ist nach oben in die
+          EcoFlow-Spalte gewandert - er prueft NICHT den eigenen Broker,
+          sondern holt bei EcoFlow das Zertifikat und liest das erste Geraet.
+          Unter beiden Spalten sah er aus, als gehoere er zu MQTT; genau so
+          hat Dirk ihn am 24.08.2026 auch gelesen. */}
       <div className="fb-actions">
-        <button type="button" className="fb-toggle" onClick={handleTest} disabled={!accessKey || !secretKey}>
-          {t.testConnection}
-        </button>
         <button
           type="button"
           className="fb-toggle fb-toggle-primary"
@@ -229,8 +288,6 @@ export default function SetupForm({ t, config, language, theme, onSaved }: Props
         </button>
       </div>
 
-      {testStatus && <p className="fb-status-ok">{testStatus}</p>}
-      {testError && <p className="fb-status-error">{testError}</p>}
       {saveError && <p className="fb-status-error">{saveError}</p>}
     </div>
   );

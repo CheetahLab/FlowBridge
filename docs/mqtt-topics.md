@@ -22,7 +22,7 @@ sähen die letzten Werte unverändert aktuell aus.
 
 | Topic | Inhalt |
 | --- | --- |
-| `flowbridge/<SN>/state` | JSON mit allen normalisierten Werten (inkl. `_modules`) |
+| `flowbridge/<SN>/state` | JSON mit allen normalisierten Werten (inkl. `_modules` und `_alter_s`) |
 | `flowbridge/<SN>/modules/pd` | JSON, Rohwerte des PD-Moduls (moduleType 1) |
 | `flowbridge/<SN>/modules/bms` | JSON, `bmsStatus` (moduleType 2) |
 | `flowbridge/<SN>/modules/ems` | JSON, `emsStatus` (moduleType 2) |
@@ -33,6 +33,25 @@ sähen die letzten Werte unverändert aktuell aus.
 Die Modul-Topics enthalten die Feldnamen **so wie EcoFlow sie liefert**
 (un-präfigiert, z. B. `cfgAcEnabled`). Die `status/`-Topics enthalten die
 normalisierten FlowBridge-Namen.
+
+### Wie alt ist ein Messwert? (`_alter_s`)
+
+Im `state`-JSON steht neben den Werten ein Feld `_alter_s`: je **Messwert**
+das Alter in Sekunden – also wie lange es her ist, dass EcoFlow diese Zahl
+zuletzt wirklich gemeldet hat. Sollwerte (Ladelimit, Ausgangsspannung …)
+stehen dort nicht; sie ändern sich nur, wenn jemand sie ändert.
+
+Das ist keine Spitzfindigkeit. Wie oft das Gerät pusht, bestimmt EcoFlow, und
+es ändert sich ohne Vorwarnung: Bis zum 20.08.2026 kam im Mittel alle 3
+Sekunden eine Meldung, danach nur noch alle 15 Minuten. Der REST-Abgleich
+fängt das **nicht** auf – er ist kein zweiter Messweg, sondern die Kopie des
+letzten Push. Am 23.08.2026 lagen zwischen zwei `invStatus`-Meldungen 10
+Minuten; in dieser Zeit stand am Eingang unverändert `105 W`, während das
+Gerät längst mit 200 W lud. Wer in EisBär oder Home Assistant auf einen Wert
+regelt, sollte sein Alter mit prüfen.
+
+Bewusst **kein** eigenes Einzelwert-Topic je Messwert: Das wäre ein zweiter,
+sich ständig ändernder retained Wert neben jedem ersten.
 
 Einzelwerte werden **nur bei Änderung** gesendet. Da sie retained sind, geht
 dabei nichts verloren – es liegen nur nicht alle paar Sekunden identische

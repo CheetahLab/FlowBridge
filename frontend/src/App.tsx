@@ -54,6 +54,15 @@ export default function App() {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
+  // Welche Ansicht offen ist, steht am Wurzelelement - daran haengt in
+  // app.css die Inhaltsbreite. Das Dashboard will Breite (Zeitachse), die
+  // Einstellungen wollen Lesebreite (Formularfelder ueber 800 px liest
+  // niemand gern). Ohne das endete der Inhalt je nach Ansicht woanders,
+  // waehrend die Kopfzeile stur bei 1600 px blieb.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-view", view);
+  }, [view]);
+
   // Vorgabe aus der config.yaml uebernehmen - aber nur fuer einen Browser,
   // der noch nie selbst umgeschaltet hat. Sonst wuerde die Einstellung eines
   // zweiten Nutzers dem ersten bei jedem Laden seine wegnehmen.
@@ -184,19 +193,11 @@ export default function App() {
                     : t.updateUnknown}
             </button>
           )}
-          {angemeldet && view !== "setup" && (
-            <button className="fb-toggle" onClick={() => setView(view === "settings" ? "dashboard" : "settings")}>
-              {t.settings}
-            </button>
-          )}
-          <button
-            className="fb-toggle fb-toggle-icon"
-            onClick={() => setDialog("about")}
-            aria-label={t.about}
-            title={t.about}
-          >
-            ℹ
-          </button>
+          {/* Reihenfolge nach Aufgabe, nicht nach Entstehung:
+              nachschlagen (Hilfe, Info) - aendern (Einstellungen) -
+              Darstellung (Sprache, Thema) - gehen (Abmelden).
+              "Abmelden" stand vorher zwischen Sprache und Thema und trennte
+              zwei Knoepfe, die zusammengehoeren. */}
           <button
             className="fb-toggle fb-toggle-icon"
             onClick={() => setDialog("help")}
@@ -206,11 +207,53 @@ export default function App() {
             ?
           </button>
           <button
+            className="fb-toggle fb-toggle-icon"
+            onClick={() => setDialog("about")}
+            aria-label={t.about}
+            title={t.about}
+          >
+            ℹ
+          </button>
+          {angemeldet && view !== "setup" && (
+            /* Zahnrad statt des Wortes "Einstellungen": Der Textknopf war mit
+               Abstand der breiteste in der Kopfzeile, obwohl er dasselbe tut
+               wie seine beiden Nachbarn. Als SVG und nicht als Zeichen ⚙,
+               weil manche Systeme das Zeichen als farbiges Emoji setzen -
+               dann faellt es aus der Reihe, statt sich einzufuegen. */
+            <button
+              className={`fb-toggle fb-toggle-icon ${view === "settings" ? "fb-toggle-on" : ""}`}
+              onClick={() => setView(view === "settings" ? "dashboard" : "settings")}
+              aria-label={view === "settings" ? t.backToDashboard : t.settings}
+              title={view === "settings" ? t.backToDashboard : t.settings}
+            >
+              <svg
+                className="fb-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="3.2" />
+                <path d="M19.4 14.5a1.6 1.6 0 0 0 .32 1.77l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.6 1.6 0 0 0-1.77-.32 1.6 1.6 0 0 0-.97 1.47V21a2 2 0 1 1-4 0v-.11a1.6 1.6 0 0 0-1.05-1.47 1.6 1.6 0 0 0-1.77.32l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.6 1.6 0 0 0 .32-1.77 1.6 1.6 0 0 0-1.47-.97H3a2 2 0 1 1 0-4h.11a1.6 1.6 0 0 0 1.47-1.05 1.6 1.6 0 0 0-.32-1.77l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.6 1.6 0 0 0 1.77.32H9a1.6 1.6 0 0 0 .97-1.47V3a2 2 0 1 1 4 0v.11a1.6 1.6 0 0 0 .97 1.47 1.6 1.6 0 0 0 1.77-.32l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.6 1.6 0 0 0-.32 1.77V9a1.6 1.6 0 0 0 1.47.97H21a2 2 0 1 1 0 4h-.11a1.6 1.6 0 0 0-1.47.97z" />
+              </svg>
+            </button>
+          )}
+          <button
             className="fb-toggle"
             onClick={() => setLang(lang === "de" ? "en" : "de")}
             aria-label="Sprache wechseln"
           >
             {lang === "de" ? "DE" : "EN"}
+          </button>
+          <button
+            className="fb-toggle fb-toggle-icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            aria-label="Theme wechseln"
+          >
+            {theme === "dark" ? "🌙" : "☀️"}
           </button>
           {angemeldet && (
             <button
@@ -226,13 +269,6 @@ export default function App() {
               {t.logout}
             </button>
           )}
-          <button
-            className="fb-toggle"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label="Theme wechseln"
-          >
-            {theme === "dark" ? "🌙" : "☀️"}
-          </button>
         </div>
       </header>
       {angemeldet && view !== "setup" && (

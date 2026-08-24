@@ -1,6 +1,6 @@
 # Fremdbestandteile / Third-Party Notices
 
-FlowBridge selbst steht unter der **GNU AGPL v3** (siehe [`LICENSE`](LICENSE),
+FlowBridge selbst steht unter der **Apache-Lizenz 2.0** (siehe [`LICENSE`](LICENSE),
 Urhebervermerk in [`NOTICE.md`](NOTICE.md)). Das ausgelieferte Docker-Abbild
 enthält daneben Software Dritter unter eigenen Lizenzen. Diese Datei listet
 sie auf — MIT und BSD verlangen beide, dass ihre Vermerke mit der Weitergabe

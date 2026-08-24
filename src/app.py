@@ -86,6 +86,95 @@ _ac_charging_set: dict[str, bool] = {}
 # Nur fuer die Schonfrist in _pause_gegen_messung_pruefen (s. dort).
 _ac_charging_gesetzt_um: dict[str, float] = {}
 
+# ---------------------------------------------------------------- Messalter
+#
+# Wie alt ist ein angezeigter Messwert wirklich?
+#
+# Anlass (23.08.2026, von Dirk im Feld gefunden): Ladeleistung 100 -> 150 ->
+# 200 W gestellt, das Geraet regelte nachweislich hoch (pd.remainTime sprang
+# von 604 auf 254 min), aber AC-Eingang und Batterieleistung standen weiter
+# auf 105 W bzw. 69 W. Im Protokoll die Erklaerung: zwischen zwei
+# invStatus-Pushes lagen **10 Minuten 24 Sekunden** (18:59:25 -> 19:09:49).
+#
+# Das ist NICHT der Normalzustand - dieser Irrtum stand hier zuerst, und Dirk
+# hat ihn zu Recht bestritten ("das hat die ganze Zeit super funktioniert").
+# Die Messung gibt ihm recht: Bis 20.08.2026, 22:28:20 lag der Median-Abstand
+# zwischen zwei Meldungen bei 3,0 s (81.780 Meldungen in 2,5 Tagen, groesste
+# Luecke 5,3 min). Ab diesem Zeitpunkt: 394 Meldungen in 2,7 Tagen, Median
+# 899 s. Genau dort stehen vier `setReportCfg` innerhalb von drei Sekunden,
+# gefolgt von einem Voll-Dump aller Module - ohne jedes Verbindungsereignis
+# auf unserer Seite. Etwas ausserhalb von FlowBridge hat die Melderate des
+# Geraets heruntergestellt.
+#
+# Fuer diese Anzeige aendert das nichts: Sie misst das Alter, statt eine
+# Melderate zu unterstellen. Faellt die Rate wieder auf 3 s, bleibt sie
+# einfach stumm - dann wird nie etwas 120 s alt.
+#
+# Und der REST-Resync faengt das NICHT auf: quota/all ist keine eigene
+# Messung, sondern die Kopie des letzten Push. In besagten zehn Minuten liefen
+# rund zwanzig Abfragen - alle lieferten dieselben 105 W. Dasselbe Muster wie
+# bei den 22 Stunden "online" nach dem Stromausfall (s. OFFLINE_AFTER_SECONDS
+# weiter unten): erfolgreiche Antwort, eingefrorener Inhalt.
+#
+# FlowBridge kann das nicht beheben - aber es darf es nicht verschweigen. Eine
+# Zahl ohne Alter behauptet Gegenwart. Deshalb wird je Messwert mitgefuehrt,
+# wann er zuletzt WIRKLICH neu war; die Oberflaeche zeigt Alte gedaempft mit
+# Uhrzeit, und der Verlauf laesst eine Luecke, statt die alte Zahl als Linie
+# weiterzuziehen.
+#
+# sn -> Quota-Rohfeld -> Wanduhr-Zeitpunkt der letzten FRISCHEN Meldung.
+# Bewusst time.time() und nicht monotonic: Der Wert wird zu einer Uhrzeit im
+# Browser ("Stand 18:59:25"), nicht nur zu einer Differenz.
+_field_times: dict[str, dict[str, float]] = {}
+# sn -> metric -> Quota-Rohfeld (aus normalize_quota). Liegt neben _state,
+# nicht darin: Die Zuordnung ist Innenleben und hat auf dem Broker nichts zu
+# suchen.
+_field_sources: dict[str, dict[str, str]] = {}
+
+# Nur diese Metriken altern. Sollwerte (Ladelimit, Ausgangsspannung,
+# Backup-Reserve ...) aendern sich nur, wenn jemand sie aendert - sie als
+# "veraltet" zu kennzeichnen waere Laerm ohne Aussage. Messwerte dagegen
+# beschreiben einen Moment, und ein alter Moment ist eine andere Aussage als
+# ein aktueller.
+_MESSWERTE = frozenset({
+    "soc_percent",
+    "battery_soc_percent",
+    "ac_watts_in",
+    "dc_watts_in",
+    "watts_out",
+    "ac_watts_out",
+    "battery_watts_in",
+    "battery_watts_out",
+    "battery_temp_c",
+    "car_watts",
+    "usb1_watts",
+    "typec1_watts",
+    "typec_charge_watts",
+    "charge_remain_min",
+    "discharge_remain_min",
+})
+
+# Ab hier gilt ein Messwert als veraltet.
+#
+# Fuenf Minuten, und die Zahl ist gemessen, nicht geschaetzt. Sie stand zuerst
+# auf zwei Minuten - zu scharf, wie der erste Blick auf die frisch
+# aufgesetzte NAS zeigte: INV und BMS melden im Sekundentakt (Alter 0 s und
+# 12 s), PD dagegen nur, wenn sich etwas ruehrt. Bei ruhendem Speicher standen
+# SoC und Ausgang deshalb nach zwei Minuten gedaempft da, und der Verlauf liess
+# Luecken fuer einen SoC, der schlicht konstant war. Richtig im Wortsinn, aber
+# unruhiger als noetig.
+#
+# Fuenf Minuten treffen beides: Der Fehlerfall, um den es geht, hatte Luecken
+# von 10 bis 15 Minuten - den faengt die Schwelle genauso sicher -, waehrend
+# normaler Leerlauf unmarkiert bleibt. Die genaue Uhrzeit steht ohnehin im
+# Tooltip, die Schwelle entscheidet nur ueber die Daempfung.
+#
+# Steht die Karte flaechendeckend gedaempft da, ist das kein Schoenheitsfehler,
+# sondern der Befund: EcoFlow meldet dann tatsaechlich seit Minuten nichts -
+# und das ist, wie oben gezeigt, ein Zustand mit Anfang und (hoffentlich) Ende,
+# kein Naturgesetz.
+MESSWERT_ALTER_S = 300
+
 # Wie lange nach einem eigenen Lade-/Pause-Befehl die Messung NICHT gegen den
 # gemerkten Zustand gehalten wird.
 #
@@ -129,15 +218,33 @@ def _record_history(sn: str, status: dict) -> None:
     if punkte and (jetzt - punkte[-1]["t"]) < HISTORY_INTERVAL_SECONDS:
         return  # nicht bei jedem Push einen Punkt anlegen
     punkt = {"t": jetzt}
+    alter = status.get("_alter_s") or {}
     for feld in HISTORY_FIELDS:
         wert = status.get(feld)
-        if wert is not None:
-            punkt[feld] = wert
+        if wert is None:
+            continue
+        # Veraltete Messwerte NICHT aufzeichnen. Sonst zeichnet der
+        # Linienschreiber alle 15 Sekunden denselben alten Wert weiter und
+        # macht aus einer Meldeluecke eine schnurgerade Linie - also aus
+        # "wir wissen es nicht" ein "es war konstant so". Genau das stand am
+        # 23.08.2026 im Bild, waehrend das Geraet in Wahrheit von 100 auf
+        # 200 W hochgeregelt hatte.
+        #
+        # Die Kurve laesst dann eine Luecke; sowohl der Pfad im Chart als auch
+        # die Energie-Integration ueberbruecken fehlende Werte bewusst nicht.
+        if alter.get(feld, 0) > MESSWERT_ALTER_S:
+            continue
+        punkt[feld] = wert
     punkte.append(punkt)
     if len(punkte) > HISTORY_MAX_POINTS:
         del punkte[: len(punkte) - HISTORY_MAX_POINTS]
 _bridge: MqttBridge | None = None
 _live_listener: EcoFlowMqttListener | None = None
+# monotonic-Zeitpunkt, seit dem die aktuelle EcoFlow-Verbindung steht - und
+# damit das Alter des Melde-Abonnements (s. MELDE_ABO_TAKT_S).
+_ecoflow_verbunden_um: float | None = None
+# monotonic-Zeitpunkt des letzten Neuaufbaus, fuer die Sperrfrist.
+_melde_abo_erneuert_um: float = 0.0
 _supervisor_task: asyncio.Task | None = None
 
 # Signatur der zuletzt verbundenen Konfiguration - aendert sie sich (neue
@@ -174,6 +281,54 @@ STALE_AFTER_SECONDS = 180
 # Stunde laesst dafuer reichlich Luft und ist immer noch drei Groessenordnungen
 # unter dem, was hier passiert ist.
 OFFLINE_AFTER_SECONDS = 3600
+
+# ------------------------------------------------------- Melde-Abonnement
+#
+# Warum FlowBridge seine EcoFlow-Verbindung von Zeit zu Zeit NEU aufbaut,
+# obwohl sie voellig in Ordnung ist.
+#
+# Wie oft ein Geraet seine Messwerte pusht, entscheidet nicht das Geraet und
+# nicht FlowBridge, sondern EcoFlow - und zwar beim ABONNIEREN. Eine Sekunde
+# nach jedem `subscribe` kommt eine `setReportCfg`-Nachricht herein; danach
+# meldet das Geraet im Sekundentakt. Diese Einrichtung ist aber nicht
+# dauerhaft.
+#
+# Belegt am eigenen Geraet (23./24.08.2026, Protokoll + Feldinventar):
+#
+#   19.08. 09:14:57  Container verbindet, abonniert
+#   19.08. 09:14:58  setReportCfg          -> Median-Abstand 3,0 s
+#   20.08. 22:28:20  nach 37 h 13 min      -> Median-Abstand 899 s
+#   danach 2,7 Tage lang langsam, DIESELBE Verbindung, nie erneuert
+#   24.08. 06:56     frische Instanz       -> Median-Abstand 3,0 s
+#
+# Der Container lief dabei durchgehend (Diagnosebericht: "Laufzeit 107 h
+# 9 min"), die Verbindung riss nie ab. Es war also kein Verbindungsfehler,
+# sondern ein ABGELAUFENES Abonnement - und niemand hat es erneuert. Wer die
+# EcoFlow-App offen hatte, tat es unbemerkt mit; ohne App verfaellt es.
+#
+# Die Folge war das, was Dirk am 23.08. gemeldet hat: Ladeleistung umgestellt,
+# das Geraet regelt binnen Sekunden hoch, und die Anzeige stand minutenlang
+# auf dem alten Wert. Nicht weil FlowBridge traege waere - es hatte die Zahl
+# einfach nicht.
+#
+# Am 14.08. war die Entscheidung noch ausdruecklich GEGEN einen Wachhund
+# gefallen: "die Verbindung war nachweislich in Ordnung, das haette am
+# Symptom vorbeigezielt." Die Begruendung stimmte, die Schlussfolgerung nicht
+# mehr - erneuert wird hier nicht die Verbindung, weil sie kaputt waere,
+# sondern das Abonnement, weil es ablaeuft.
+#
+# Alle drei Zahlen unten sind Vorsichtsmass, nicht Messung: Wann das
+# Abonnement genau verfaellt, wissen wir nicht - nur, dass 37 Stunden zu lang
+# sind.
+MELDE_ABO_TAKT_S = 12 * 3600
+# Ausserplanmaessig: So lange Stille gilt als Beweis, dass das Abo nicht mehr
+# greift. Deutlich ueber der groessten regulaeren Push-Luecke bei gesundem Abo
+# (5,3 min gemessen) - sonst wuerde eine normale Pause einen Neuaufbau
+# ausloesen.
+MELDE_STILLE_S = 420
+# Sperrfrist zwischen zwei Neuaufbauten. Verhindert, dass ein abgeschaltetes
+# Geraet FlowBridge in eine Dauerschleife aus Zertifikatsabrufen treibt.
+MELDE_ABO_SPERRE_S = 30 * 60
 
 # Takt der Aufsichtsschleife: So oft wird geprueft, ob beide MQTT-Verbindungen
 # stehen. Bewusst deutlich schneller als der REST-Resync (poll_interval,
@@ -278,6 +433,52 @@ def _stille_sekunden(sn: str) -> float | None:
     return time.monotonic() - last
 
 
+def _frische_merken(sn: str, felder: dict, *, from_push: bool) -> None:
+    """Haelt fest, wann ein Rohfeld zuletzt WIRKLICH neu war (s. _field_times).
+
+    Die Unterscheidung nach Quelle ist der ganze Punkt:
+
+      * Push  - das Geraet hat sich gemeldet. Jedes Feld darin ist frisch,
+                auch ein unveraenderter Wert (dann ist "immer noch 0 W" die
+                Nachricht).
+      * REST  - quota/all liefert die Kopie des letzten Push. Ein
+                gleichgebliebener Wert beweist hier gar nichts; er stuende
+                auch dann noch da, wenn das Geraet seit Stunden schweigt
+                (nachgewiesen: 22 h eingefrorener Cache nach einem
+                Stromausfall). Nur ein GEAENDERTER Wert ist neue Information -
+                dann hat die Cloud einen Push bekommen, den wir verpasst
+                haben, etwa waehrend eines Verbindungsabbruchs.
+
+    Wuerde REST pauschal als frisch gelten, waere die ganze Altersanzeige
+    wertlos: Sie stuende alle 30 Sekunden wieder auf null, waehrend die Zahl
+    daneben unveraendert alt bliebe.
+    """
+    cache = _quota_cache.get(sn, {})
+    zeiten = _field_times.setdefault(sn, {})
+    jetzt = time.time()
+    for key, wert in felder.items():
+        if from_push or key not in cache or cache[key] != wert:
+            zeiten[key] = jetzt
+
+
+def _messalter(sn: str) -> dict[str, int]:
+    """metric -> Alter in Sekunden, fuer alle Messwerte mit bekannter Quelle.
+
+    Wird bei jedem Abruf neu gerechnet statt einmal beim Veroeffentlichen -
+    ein Alter, das selbst veraltet, waere schwer zu ertragen.
+    """
+    zeiten = _field_times.get(sn, {})
+    jetzt = time.time()
+    alter: dict[str, int] = {}
+    for metric, key in _field_sources.get(sn, {}).items():
+        if metric not in _MESSWERTE:
+            continue
+        zeitpunkt = zeiten.get(key)
+        if zeitpunkt is not None:
+            alter[metric] = max(0, int(jetzt - zeitpunkt))
+    return alter
+
+
 def _apply_quota_update(sn: str, partial_or_full: dict, *, from_push: bool = True) -> None:
     """Gemeinsamer Pfad fuer REST-Resync UND Live-MQTT-Push (siehe ecoflow_mqtt.py).
 
@@ -295,6 +496,7 @@ def _apply_quota_update(sn: str, partial_or_full: dict, *, from_push: bool = Tru
     asyncio-Event-Loop) - Dict-Zuweisungen und MqttBridge.publish_state()
     sind dafuer threadsicher genug (GIL bzw. paho-eigene Thread-Sicherheit).
     """
+    _frische_merken(sn, partial_or_full, from_push=from_push)
     _quota_cache.setdefault(sn, {}).update(partial_or_full)
     # Hier laufen BEIDE Kanaele zusammen - der einzige Ort, an dem sich Push
     # und REST mit derselben Zeile erfassen lassen.
@@ -375,8 +577,13 @@ def _pause_gegen_messung_pruefen(sn: str, status: dict) -> None:
 
 def _publish_state(sn: str) -> None:
     """Normalisierten Status neu berechnen, ablegen und lokal publishen."""
-    status = normalize_quota(sn, _quota_cache.get(sn, {}))
+    status, quellen = normalize_quota(sn, _quota_cache.get(sn, {}))
+    _field_sources[sn] = quellen
     status["online"] = _is_online(sn)
+    # Auch auf dem lokalen Broker: Wer in EisBaer oder Home Assistant auf
+    # `state` schaut, soll dieselbe Auskunft haben wie das Dashboard. Der
+    # Unterstrich haelt es aus den Einzelwert-Topics heraus (s. mqtt_bridge).
+    status["_alter_s"] = _messalter(sn)
     status["last_update"] = datetime.now(timezone.utc).isoformat()
     if sn in _charge_power_set:
         status["charge_power_watts_set"] = _charge_power_set[sn]
@@ -495,7 +702,7 @@ def _verbinde_lokal(mqtt_cfg: dict, sns: tuple[str, ...]) -> None:
 
 
 async def _verbinde_ecoflow(eco: dict, sns: tuple[str, ...]) -> None:
-    global _live_listener
+    global _live_listener, _ecoflow_verbunden_um
     try:
         client = EcoFlowClient(eco["access_key"], eco["secret_key"])
         # Der Zertifikatsabruf ist der zerbrechliche Teil: ein REST-Aufruf
@@ -511,10 +718,95 @@ async def _verbinde_ecoflow(eco: dict, sns: tuple[str, ...]) -> None:
         _live_listener.connect()
         for sn in sns:
             _live_listener.subscribe_device(sn)
+        # Der Zeitpunkt zaehlt ab dem ABONNIEREN, nicht ab dem Verbindungsaufbau:
+        # daran haengt das Melde-Abonnement (s. MELDE_ABO_TAKT_S).
+        _ecoflow_verbunden_um = time.monotonic()
         logger.info("EcoFlow-Live-MQTT verbunden (%s Geraete abonniert).", len(sns))
     except Exception as exc:
         logger.warning("EcoFlow-Live-MQTT-Verbindung fehlgeschlagen (nur REST-Resync aktiv): %s", exc)
         _live_listener = None
+        _ecoflow_verbunden_um = None
+
+
+async def _erneuere_melde_abo(eco: dict, sns: tuple[str, ...]) -> None:
+    """Verbindung zum EcoFlow-Broker abbauen und sofort neu aufbauen.
+
+    Der Neuaufbau ist Mittel, nicht Zweck: Es geht um das `subscribe`, das
+    EcoFlow dazu bringt, das schnelle Melden wieder einzurichten.
+
+    Das kurze Warten am Ende ist kein Zierrat. Die Aufsichtsschleife
+    veroeffentlicht direkt danach den Verbindungszustand auf dem lokalen
+    Broker; ohne das Warten stuende dort fuer einen Moment
+    `flowbridge/bridge/ecoflow = offline`, obwohl nichts kaputt ist - und
+    genau darauf koennen in EisBaer Meldungen haengen. Kommt die Verbindung
+    in dieser Zeit nicht hoch, ist die Meldung dann berechtigt.
+    """
+    global _live_listener
+    alt = _live_listener
+    _live_listener = None
+    if alt is not None:
+        try:
+            alt.disconnect()
+        except Exception as exc:  # noqa: BLE001 - ein Abbau darf nichts umbringen
+            logger.warning("Alte EcoFlow-Verbindung nicht saeuberlich getrennt: %s", exc)
+    await _verbinde_ecoflow(eco, sns)
+    for _ in range(20):
+        if _live_listener is None or _live_listener.is_connected():
+            return
+        await asyncio.sleep(0.25)
+
+
+async def _melde_abo_pflegen(config: dict) -> None:
+    """Prueft, ob das Melde-Abonnement erneuert werden muss - und tut es.
+
+    Zwei Anlaesse, beide notwendig:
+
+    * planmaessig, weil das Abo nachweislich ablaeuft und niemand merkt es
+      von aussen (MELDE_ABO_TAKT_S)
+    * nach Befund, wenn die Meldungen schon eingebrochen SIND - dann muss
+      nicht erst der halbe Tag vergehen (MELDE_STILLE_S)
+
+    Bewusst NICHT erneuert wird, wenn das Geraet sich selbst abgemeldet hat:
+    Dann ist die Stille erklaert, und ein Neuaufbau wuerde daran nichts
+    aendern - er wuerde nur alle 30 Minuten einen Zertifikatsabruf kosten,
+    solange der Speicher aus ist.
+    """
+    global _melde_abo_erneuert_um
+
+    if _live_listener is None or _ecoflow_verbunden_um is None:
+        return  # es gibt gerade keine Verbindung, die man erneuern koennte
+
+    jetzt = time.monotonic()
+    if jetzt - _melde_abo_erneuert_um < MELDE_ABO_SPERRE_S:
+        return
+
+    sns = tuple(sorted(d["sn"] for d in config["ecoflow"].get("devices", [])))
+    if sns and all(sn in _reported_offline for sn in sns):
+        return
+
+    alter = jetzt - _ecoflow_verbunden_um
+    # Nur die Geraete aus der Konfiguration zaehlen. `_last_seen` kann auch
+    # Seriennummern enthalten, die inzwischen nicht mehr eingerichtet sind -
+    # deren letzte Meldung wuerde ein abgelaufenes Abo als gesund ausweisen.
+    stille = min((jetzt - _last_seen[sn] for sn in sns if sn in _last_seen), default=None)
+
+    if alter >= MELDE_ABO_TAKT_S:
+        grund = f"Abonnement ist {alter / 3600:.1f} h alt"
+    elif alter < MELDE_STILLE_S:
+        # Frisch verbunden und noch nichts gehoert: Das ist normal, der erste
+        # Push braucht einen Moment. Ohne diese Bedingung wuerde ein Neustart
+        # sich selbst gleich wieder neu verbinden.
+        return
+    elif stille is None:
+        grund = f"seit {alter / 60:.0f} min verbunden, aber nie eine Meldung"
+    elif stille >= MELDE_STILLE_S:
+        grund = f"seit {stille / 60:.0f} min keine Meldung"
+    else:
+        return
+
+    _melde_abo_erneuert_um = jetzt
+    logger.info("Melde-Abonnement wird erneuert (%s) - EcoFlow-MQTT neu verbinden.", grund)
+    await _erneuere_melde_abo(config["ecoflow"], sns)
 
 
 async def _ensure_connected(config: dict) -> None:
@@ -635,6 +927,9 @@ async def _supervisor_loop() -> None:
             continue
 
         await _ensure_connected(config)
+        # Direkt nach _ensure_connected und VOR der Verfuegbarkeits-Meldung:
+        # Ein Neuaufbau soll nicht als kurzer Ausfall auf dem Broker landen.
+        await _melde_abo_pflegen(config)
 
         # Zustand der Cloud-Verbindung veroeffentlichen - dritte, unabhaengige
         # Ausfallquelle neben FlowBridge selbst und dem Geraet. Sendet nur bei
@@ -1092,6 +1387,13 @@ async def get_state() -> dict:
         stille = _stille_sekunden(sn)
         if stille is not None:
             entry["silence_seconds"] = int(stille)
+        # Alter frisch zum Abrufzeitpunkt, nicht das vom letzten Publish:
+        # Das Dashboard fragt alle drei Sekunden, veroeffentlicht wird aber
+        # nur bei Push oder Resync. Waere hier der alte Stand drin, stuende
+        # bei einer Meldeluecke minutenlang dieselbe Altersangabe - eine
+        # veraltete Angabe darueber, wie veraltet etwas ist.
+        if sn in _field_sources:
+            entry["_alter_s"] = _messalter(sn)
         result[sn] = entry
     # Geraete, die (noch) in der Config fehlen, aber Daten haben, nicht verlieren.
     for sn, status in _state.items():
@@ -1107,6 +1409,11 @@ async def refresh_device(sn: str) -> dict:
     ist der Push ohnehin schneller. Zaehlt bewusst NICHT als Lebenszeichen
     (from_push=False): quota/all wird aus dem Cloud-Cache beantwortet und
     saehe auch bei getrenntem Geraet erfolgreich aus.
+
+    Und es holt KEINE frische Messung: Der Cloud-Cache ist die Kopie des
+    letzten Push. Wer hier drueckt, weil eine Zahl alt aussieht, bekommt
+    dieselbe Zahl noch einmal - sichtbar daran, dass ihr Alter danach
+    weiterlaeuft (s. _frische_merken).
     """
     config = load_config()
     eco = config["ecoflow"]
@@ -1559,6 +1866,16 @@ async def get_health() -> dict:
         "ecoflow_broker": {
             "configured": bool(config["ecoflow"].get("access_key")),
             "connected": _live_listener is not None and _live_listener.is_connected(),
+            # Alter des Melde-Abonnements in Minuten. Steht mit im
+            # Diagnosebericht (der gibt dieses Dict aus) und ist dort der
+            # einzige Beleg, dass die Erneuerung wirklich greift: Nach einem
+            # Neuaufbau faengt die Zahl wieder bei 0 an. Ohne sie waere ein
+            # abgelaufenes Abo von einem frischen nicht zu unterscheiden -
+            # "connected" ist in beiden Faellen True.
+            "subscription_minutes": (
+                None if _ecoflow_verbunden_um is None
+                else int((time.monotonic() - _ecoflow_verbunden_um) / 60)
+            ),
         },
         "local_broker": {
             "configured": bool(config["mqtt"].get("host")),

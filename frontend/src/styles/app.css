@@ -9,11 +9,41 @@ body {
   font-family: "Inter", "Segoe UI", system-ui, sans-serif;
 }
 
+/* EINE Inhaltsbreite fuer die ganze Seite.
+   
+   Ohne sie lief die Kopfzeile ueber die volle Fensterbreite, waehrend der
+   Inhalt darunter bei 100rem endete: Auf 2000 px stand das Logo links, die
+   Knoepfe klebten 400 px weiter rechts als die Karten, und dazwischen war
+   Nichts. Dirk am 24.08.2026: "oben rechts wandert komplett weg".
+   
+   Geloest ueber den Innenabstand statt ueber einen zusaetzlichen Kasten:
+   Die Balken behalten ihren Hintergrund von Rand zu Rand - so soll eine
+   Kopfzeile aussehen -, aber ihr INHALT sitzt auf denselben Kanten wie die
+   Karten darunter. Unterhalb der Inhaltsbreite bleibt es beim normalen
+   Abstand von 1.25rem. */
+:root {
+  --fb-inhalt: 100rem;
+}
+
+/* Die Einstellungen sind eine Formularseite und wollen Lesebreite, nicht
+   Bildschirmbreite. Weil die Kopfzeile denselben Wert benutzt, wandert sie
+   mit - Inhalt und Knoepfe enden also in JEDER Ansicht auf derselben Kante.
+   Das Attribut setzt App.tsx. */
+:root[data-view="settings"] {
+  --fb-inhalt: 74rem;
+}
+
+.fb-header,
+.fb-health,
+.fb-main {
+  padding-inline: max(1.25rem, calc((100% - var(--fb-inhalt)) / 2));
+}
+
 .fb-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1.25rem;
+  padding-block: 0.75rem;
   border-bottom: 1px solid var(--fb-line);
   background: var(--fb-panel);
 }
@@ -70,7 +100,7 @@ body {
 }
 
 .fb-main {
-  padding: 1.25rem;
+  padding-block: 1.25rem;
 }
 
 .fb-card {
@@ -198,10 +228,19 @@ body {
 .fb-device-pair {
   display: grid;
   /* 32rem: bei vier Kacheln bleiben so ~7rem je Kachel - genug, damit
-     Beschriftungen wie "AC-Ausgangsleistung" nicht zerfasern. */
+     Beschriftungen wie "AC-Ausgangsleistung" nicht zerfasern.
+     
+     Die Obergrenze steckt nicht mehr hier, sondern in --fb-inhalt: Sie gilt
+     fuer die ganze Seite, damit Kopfzeile und Karten auf denselben Kanten
+     sitzen. */
   grid-template-columns: 32rem minmax(0, 1fr);
   gap: 1rem;
-  align-items: start;
+  /* Bewusst KEIN align-items: start. Beide Karten sollen auf derselben Kante
+     enden - welche von beiden gerade laenger ist, haengt vom Geraet ab (viele
+     Kacheln) und vom Zeitraum (lange Legende). Mit "start" endete mal die
+     eine, mal die andere weiter unten, und dazwischen stand eine Stufe.
+     Der Vorgabewert "stretch" zieht die kuerzere auf die Hoehe der laengeren;
+     der Rand darunter ist ruhiger als die Stufe. */
   margin-bottom: 1rem;
 }
 
@@ -220,6 +259,11 @@ body {
 .fb-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* Alle Kacheln einer Reihe gleich hoch. Ohne das richtet sich jede Reihe
+     nach ihrer laengsten Beschriftung, und eine einzige zweizeilige Zeile
+     ("Bis voll geladen") schob die ganze Reihe auseinander - der Rest stand
+     dann mit Luft darunter. */
+  grid-auto-rows: 1fr;
   gap: 0.5rem;
   margin: 0.75rem 0 1rem;
 }
@@ -255,11 +299,61 @@ body {
   font-size: 0.7rem;
   color: var(--fb-muted);
   line-height: 1.2;
+  /* Zwei Zeilen sind die Obergrenze. Bei vier Spalten auf schmalen Fenstern
+     brach "AC-Ausgangsleistung" dreizeilig um; die langen Etiketten sind
+     inzwischen gekuerzt (Langform steckt im Tooltip), und diese Zeile haelt
+     den Fall fest, falls doch einmal ein langes dazukommt. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   /* Lange Wörter ("AC-Ausgangsleistung") sauber umbrechen statt überlaufen. */
   overflow-wrap: anywhere;
   hyphens: auto;
 }
 
+/* Veralteter Messwert: EcoFlow hat diese Zahl seit Minuten nicht mehr
+   gemeldet (siehe MESSWERT_ALTER_S im Backend).
+
+   Zurueckgenommen, nicht alarmiert: Das ist kein Fehler, sondern eine
+   Meldeluecke - im Ruhezustand voellig normal. Die Kachel soll sagen "hier
+   steht ein alter Stand", nicht "hier ist etwas kaputt". Deshalb gedaempfte
+   Zahl plus Altersangabe unter der Beschriftung - und ausdruecklich KEIN
+   Rot, kein Rahmen, kein Blinken.
+
+   Die gestrichelte Unterkante ist der zweite, farbunabhaengige Traeger der
+   Aussage: Wer Farben schlecht unterscheidet, sieht sie trotzdem. */
+.fb-metric-stale {
+  border-bottom-style: dashed;
+}
+
+.fb-metric-stale .fb-metric-value {
+  color: var(--fb-muted);
+  font-weight: 600;
+}
+
+.fb-metric-age {
+  font-style: italic;
+  white-space: nowrap;
+}
+
+/* Derselbe Befund in der Legende: Der dort gezeigte Wert ist der letzte
+   AUFGEZEICHNETE - waehrend einer Meldeluecke also der letzte vor der Luecke,
+   passend zum Ende der Kurve. */
+.fb-legend-stale {
+  opacity: 0.55;
+  font-style: italic;
+}
+
+/* Die Momentan-Bilanz rechnet aus drei Messwerten - ist einer davon alt, ist
+   das Ergebnis eine Aussage ueber die Vergangenheit. Zurueckgenommen statt
+   ausgeblendet: Die Zahlen stimmen ja, nur nicht fuer jetzt. */
+.fb-energy-stale {
+  opacity: 0.5;
+}
+
+/* Bleibt, obwohl das Raster schon streckt: Die Regel greift auch dann noch,
+   wenn die Karte einmal ausserhalb des Paares steht. */
 .fb-chart-card {
   min-height: 100%;
 }
@@ -277,9 +371,17 @@ body {
   gap: 0.15rem;
 }
 
+/* Der Messrahmen fuer den ResizeObserver: Nur dieser Kasten kennt die echte
+   Breite der Karte. Das SVG darin bekommt sie als viewBox - eine Einheit ist
+   dann ein Pixel, und nichts wird mitskaliert. */
+.fb-chart-flaeche {
+  width: 100%;
+}
+
 .fb-chart {
   width: 100%;
   height: auto;
+  display: block;
   margin-top: 0.5rem;
 }
 
@@ -321,6 +423,48 @@ body {
 
 .fb-legend-value {
   color: var(--fb-muted);
+}
+
+/* Schalter und Grenzwerte, die man einmal setzt, in zwei Spalten.
+   Untereinander ergaben sie eine Liste, die die Geraetekarte doppelt so hoch
+   machte wie den Verlauf daneben - und die eine Zeile, die man staendig
+   braucht (Ladeleistung), stand ganz unten. Die steht jetzt oben und ueber
+   die volle Breite; hier drin liegt nur noch das Selten-Benutzte.
+
+   Spaltenabstand grosszuegig: Die Zeilen haben rechts einen Schalter oder ein
+   Eingabefeld, und zwei davon dicht nebeneinander laesen sich schlecht
+   auseinanderhalten. */
+.fb-control-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.5rem;
+  align-content: start;
+}
+
+/* Auf schmalen Fenstern zurueck auf eine Spalte - zwei Spalten mit je einem
+   Schalter waeren dort schmaler als der Schalter selbst. */
+@media (max-width: 44rem) {
+  .fb-control-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Abschnittsueberschrift in der Geraetekarte. Uebernimmt die Form des
+   Geraetenamens (h3 in der Karte: 0.95rem, Versalien, gesperrt) und braucht
+   deshalb nur den Abstand. */
+.fb-section-title {
+  margin-top: 1.4rem;
+}
+
+/* Die erste Zeile unter der Ueberschrift traegt KEINE Trennlinie - die
+   Ueberschrift trennt bereits, und zwei Trenner uebereinander sind einer
+   zu viel. */
+/* Zwei Klassen, nicht eine: `.fb-toggle-row-lead` allein haette dieselbe
+   Spezifitaet wie `.fb-toggle-row` - und weil die weiter unten steht, gewann
+   dort wieder `border-top: 1px`. Die Linie blieb sichtbar. Mit beiden Klassen
+   ist die Regel staerker und haengt nicht mehr an der Reihenfolge im Stylesheet. */
+.fb-toggle-row.fb-toggle-row-lead {
+  border-top: none;
 }
 
 .fb-toggle-row {
@@ -428,7 +572,7 @@ input[type="number"]::-webkit-inner-spin-button {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 1.25rem;
-  padding: 0.5rem 1.25rem;
+  padding-block: 0.5rem;
   border-bottom: 1px solid var(--fb-line);
   background: var(--fb-panel);
   font-size: 0.78rem;
@@ -504,7 +648,10 @@ input[type="number"]::-webkit-inner-spin-button {
 .fb-slider-scale {
   display: flex;
   justify-content: space-between;
-  margin: -0.25rem 0.5rem 0.9rem;
+  /* Der untere Abstand muss die Beschriftung MITTRAGEN: Die Zahlen haengen
+     absolut positioniert unter den Marken und zaehlen deshalb nicht zur Hoehe
+     des Kastens. Mit 0.9rem stiessen sie fast an den Hinweis darunter. */
+  margin: -0.25rem 0.5rem 1.4rem;
   position: relative;
 }
 
@@ -513,6 +660,15 @@ input[type="number"]::-webkit-inner-spin-button {
   height: 4px;
   background: var(--fb-line);
   position: relative;
+}
+
+/* Beschriftete Marken deutlich laenger und kraeftiger als die Zwischenstufen.
+   Damit liest sich die Skala wie ein Lineal: die Zahl gehoert sichtbar zu
+   IHRER Marke, und die Zwischenstufen bleiben als feines Raster erkennbar,
+   ohne mit den Zahlen zu konkurrieren. */
+.fb-slider-tick-major {
+  height: 8px;
+  background: var(--fb-muted);
 }
 
 .fb-slider-tick-label {
@@ -544,6 +700,13 @@ input[type="number"]::-webkit-inner-spin-button {
 .fb-charge-note {
   margin: 0 0 0.5rem;
   font-size: 0.72rem;
+}
+
+/* Hinweis, der unmittelbar zu der Zeile darueber gehoert: knapp darunter,
+   mit etwas Luft zur naechsten Zeile. Ohne den kleinen oberen Abstand klebte
+   der Satz an der Unterkante des Schalters. */
+.fb-note-tight {
+  margin: 0.2rem 0 0.7rem;
 }
 
 .fb-tabs {
@@ -927,6 +1090,26 @@ input[type="number"]::-webkit-inner-spin-button {
   min-width: 2rem;
   font-size: 0.95rem;
   line-height: 1;
+  /* Die drei Icon-Knoepfe sollen gleich gross wirken, obwohl einer ein SVG
+     traegt und die anderen Schriftzeichen. Ohne das Zentrieren saesse das
+     SVG an der Grundlinie der Schrift statt in der Mitte des Knopfes. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Icon in Schriftgroesse, Farbe vom Knopf geerbt - damit es sich beim
+   Ueberfahren und im hellen Thema genauso verhaelt wie "?" und "i". */
+.fb-icon {
+  width: 1.05em;
+  height: 1.05em;
+}
+
+/* Der Einstellungen-Knopf, waehrend die Einstellungen offen sind: Er fuehrt
+   dann zurueck, und das soll man ihm ansehen. */
+.fb-toggle-on {
+  border-color: var(--fb-accent);
+  color: var(--fb-accent);
 }
 
 /* Version rechtsbuendig am Ende der Statuszeile. */
@@ -1132,7 +1315,9 @@ a.fb-toggle {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-width: 1180px;
+  /* Die Breite steckt jetzt in --fb-inhalt (s. oben), damit die Kopfzeile
+     denselben Wert kennt. Eine zweite Obergrenze hier wuerde beides wieder
+     auseinanderlaufen lassen. */
 }
 
 /* Links die Einrichtung, rechts Passwort und Diagnose gestapelt.
@@ -1146,6 +1331,20 @@ a.fb-toggle {
   align-items: start;
 }
 
+/* Tab-Leiste der Einstellungen: dieselben Knoepfe wie in der Geraetekarte,
+   nur mit Luft darunter - dort sitzen sie direkt ueber einer Tabelle, hier
+   ueber einer Kachel mit eigenem Rand. */
+.fb-settings-tabs {
+  margin-bottom: 0.25rem;
+}
+
+/* Innerhalb eines Tabs zwei gleich breite Spalten. Das Verhaeltnis 1.15:1 aus
+   der alten Seite kam daher, dass links die lange Einrichtungs-Kachel stand;
+   die hat jetzt einen eigenen Tab und die volle Breite. */
+.fb-settings-grid-gleich {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .fb-settings-col {
   display: flex;
   flex-direction: column;
@@ -1157,6 +1356,40 @@ a.fb-toggle {
 @media (max-width: 900px) {
   .fb-settings-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Wegweiser zu den Zugangsdaten: steht direkt unter dem Einleitungssatz und
+   soll sich als Hinweis lesen, nicht als weitere Anweisung - deshalb etwas
+   kleiner und mit Luft zum Formular darunter. */
+.fb-setup-wegweiser {
+  font-size: 0.82rem;
+  margin: -0.4rem 0 1.1rem;
+}
+
+/* Zwei Spalten in der Einrichtung: links EcoFlow (Schluessel, Geraete),
+   rechts der eigene Broker. Beide Haelften sind unabhaengig voneinander -
+   man richtet die eine ein und die andere danach. */
+.fb-setup-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1.75rem;
+  align-items: start;
+}
+
+/* Die MQTT-Ueberschrift steht in der zweiten Spalte ganz oben und braucht
+   deshalb keinen Abstand nach oben - sonst saessen die beiden Spalten
+   versetzt. */
+.fb-setup-col-head {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .fb-setup-cols {
+    grid-template-columns: 1fr;
+  }
+  .fb-setup-col-head {
+    margin-top: 1.25rem;
   }
 }
 

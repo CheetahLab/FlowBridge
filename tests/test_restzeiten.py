@@ -14,7 +14,8 @@ SN = "R621TEST"
 
 
 def _status(**quota):
-    return normalize_quota(SN, quota)
+    status, _quellen = normalize_quota(SN, quota)
+    return status
 
 
 def test_platzhalter_wird_nicht_als_restzeit_ausgegeben():

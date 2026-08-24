@@ -31,7 +31,7 @@ import type { Strings } from "../i18n";
  *  RFC theoretisch unterscheidend, praktisch behandelt ihn jeder Anbieter
  *  gleich, und zwei Schreibweisen derselben Adresse im selben Abbild sähen
  *  nach Versehen aus. */
-export const KONTAKT_MAIL = "flowbridge@hofherweb.de";
+export const KONTAKT_MAIL = "dirk@cheetahlab.de";
 
 export default function MailLink({
   t,

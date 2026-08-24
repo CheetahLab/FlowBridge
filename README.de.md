@@ -14,7 +14,7 @@
 <p align="center">
   <a href="https://hub.docker.com/r/cheetahlab/flowbridge"><img src="https://img.shields.io/docker/pulls/cheetahlab/flowbridge?label=Docker%20Hub&color=0A6BFF" alt="Docker Hub"></a>
   <a href="https://hub.docker.com/r/cheetahlab/flowbridge/tags"><img src="https://img.shields.io/docker/v/cheetahlab/flowbridge?sort=date&label=Version&color=0A6BFF" alt="Version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/Lizenz-AGPL--3.0-0A6BFF" alt="Lizenz: AGPL-3.0"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/Lizenz-Apache--2.0-0A6BFF" alt="Lizenz: Apache-2.0"></a>
 </p>
 
 ---
@@ -32,6 +32,19 @@ mit deinem Broker. Sonst mit niemandem — bis auf die Update-Prüfung, die eine
 > Oberfläche, dieses README und die Synology-Anleitung gibt es auf Deutsch und
 > Englisch. Die übrigen Nachschlagedokumente in `docs/` und die
 > Quelltextkommentare sind deutsch.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/flowbridge-dashboard-dark-de.png">
+    <img src="assets/screenshots/flowbridge-dashboard-light-de.png" alt="FlowBridge-Dashboard: Messwerte, Steuerung, Verlauf und Energiebilanz" width="900">
+  </picture>
+</p>
+
+<p align="center">
+  <em>Links Messwerte und Steuerung, rechts der Verlauf — darunter die
+  Energiebilanz, die zeigt, wie viel vom Netzstrom wirklich in der Batterie
+  ankommt.</em>
+</p>
 
 ## Schnellstart
 
@@ -87,7 +100,12 @@ gehasht im Datenordner.
 | Modell | Stand |
 |---|---|
 | **RIVER 2 Pro** | an echter Hardware verifiziert |
-| **DELTA 2** | nach Dokumentation vorbereitet, nie an einem Gerät gelaufen |
+| **DELTA 2** | im Test an echter Hardware (Feldtest läuft) |
+
+Die DELTA-2-Unterstützung ist aus der Dokumentation abgeleitet und läuft
+derzeit erstmals an einem echten Gerät. Bis dieser Feldtest ausgewertet ist,
+bleibt sie im Diagnosebericht `documented` und nicht `verified` — der Bericht
+kennt nur diese beiden Zustände, und ein laufender Test ist kein Nachweis.
 
 Andere Modelle zeigen ihre Werte an, nehmen aber möglicherweise keine Befehle
 an. Der Diagnosebericht sagt das ausdrücklich (`documented` statt `verified`),
@@ -100,12 +118,24 @@ statt es zu verschweigen.
   Ladeleistung, Ladepause — über die Oberfläche oder über MQTT, beides durch
   denselben Code
 - **Home-Assistant-Discovery** — die Geräte tauchen von selbst auf
-- **Topic-Export für EisBär SCADA** (Kanal-CSV + Payload-Profil-XML)
+- **Topic-Export für EisBär SCADA V3/V4** (Kanal-CSV + Payload-Profil-XML)
 - **Feldinventar**: hält über Monate fest, welche Felder dein Gerät wirklich
   liefert — sichtbar wird damit, was eine Firmware still hinzufügt oder wegnimmt
 - **Diagnose-Paket**: Bericht, maskierte Konfiguration, Topics und Protokoll in
   einem ZIP — Schlüssel geschwärzt, Seriennummern durch Platzhalter ersetzt
 - **Oberfläche auf Deutsch und Englisch**, Hell und Dunkel, dauerhaft einstellbar
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/flowbridge-module-inv-dark-de.png">
+    <img src="assets/screenshots/flowbridge-module-inv-light-de.png" alt="Modul-Tab INV: die Rohwerte, so wie EcoFlow sie liefert" width="900">
+  </picture>
+</p>
+
+<p align="center">
+  <em>Nichts versteckt: Hinter den Tabs PD, BMS, EMS, INV und MPPT stehen die
+  Rohwerte, so wie EcoFlow sie liefert — mit den Originalnamen.</em>
+</p>
 
 ## Wie es zusammenhängt
 
@@ -115,6 +145,77 @@ statt es zu verschweigen.
     <img src="assets/topology/flowbridge-topology-light.png" alt="Topologie: EcoFlow-Cloud → FlowBridge → lokaler Broker" width="760">
   </picture>
 </p>
+
+## Was du sonst nicht siehst
+
+Die EcoFlow-App zeigt dir, wie viel Watt hineingehen und wie voll der Akku ist.
+Was sie nicht zeigt: wie viel davon **ankommt**.
+
+FlowBridge rechnet das aus gemessenen Werten. Eingang, Ausgang und
+Batterieleistung liefert das Gerät selbst, der Rest ist Subtraktion — nichts
+davon ist geschätzt oder modelliert.
+
+### Nachgemessen an einem River 2 Pro
+
+| AC-Ladeleistung | am Eingang | in der Batterie | Wirkungsgrad | Verlust |
+| --- | --- | --- | --- | --- |
+| 100 W | 105 W | 61 W | **58 %** | 42 W |
+| 200 W | 205 W | 157 W | **77 %** | 48 W |
+| 500 W | 500 W | 435 W | **87 %** | 65 W |
+
+Der Grund ist der Ladewandler: Sein Grundverbrauch ist weitgehend **fest**. Bei
+100 W frisst er fast die Hälfte, bei 500 W verteilt sich fast derselbe Betrag
+auf fünfmal so viel Energie.
+
+Die drei Messpunkte liegen dabei bemerkenswert genau auf einer Geraden:
+
+```text
+Verlust = 36 W + 5,8 % der Eingangsleistung
+
+  100 W  ->  gemessen 42 W,  Gerade 42,1 W
+  200 W  ->  gemessen 48 W,  Gerade 47,9 W
+  500 W  ->  gemessen 65 W,  Gerade 65,0 W
+```
+
+Größte Abweichung 0,1 W. Der Wandler zieht also rund **36 W einfach dafür, dass
+er läuft**, und obendrauf knapp 6 % der durchgesetzten Leistung.
+
+### Was das für eine volle Ladung heißt
+
+Der Akku des River 2 Pro fasst 768 Wh. Von leer auf voll, gerechnet mit den
+Werten oben:
+
+| Ladeleistung | aus der Steckdose | Dauer |
+| --- | --- | --- |
+| 100 W | ~1320 Wh | ~12,6 h |
+| 200 W | ~1000 Wh | ~4,9 h |
+| 500 W | ~880 Wh | ~1,8 h |
+
+Der Sprung von 100 auf 200 W spart **rund 320 Wh** — der von 200 auf 500 W nur
+noch etwa 115 Wh. Die große Verbesserung liegt also ganz unten: Wer bei 100 W
+lädt, zahlt für jede Ladung ein Drittel drauf und wartet dafür zweieinhalbmal
+so lange.
+
+Das widerspricht dem, was viele aus der Handy- und E-Auto-Welt mitbringen:
+Langsam laden ist hier nicht schonender, sondern teurer.
+
+### Wo die Aussage aufhört
+
+Was diese Messung **nicht** sagt: ob hohe Ladeleistung die Zellen schneller
+altern lässt. Zyklenzahl und Zelltemperatur gibt die offene Schnittstelle nicht
+her (siehe nächster Abschnitt). „Billiger" ist belegt, „insgesamt besser" nicht.
+
+Zwei weitere Einschränkungen, damit die Zahlen richtig gelesen werden:
+
+- Der gemessene AC-Eingang enthält **auch die Last am AC-Ausgang**. Hängt dort
+  ein Verbraucher, wandert die Zahl unabhängig von der Ladeeinstellung.
+- Der Momentanwert schwankt, weil Eingang (INV-Modul) und Batterieleistung
+  (BMS-Modul) zeitversetzt eintreffen. Der Wert **über den Zeitraum** ist der
+  belastbarere — deshalb steht er im Dashboard mit dabei.
+
+Alle Zahlen stammen von **einem** Gerät. Ob ein anderes River 2 Pro dieselbe
+Gerade zeigt, weiß niemand — genau dafür rechnet FlowBridge es bei dir aus,
+statt es zu behaupten.
 
 ## Was das Gerät nicht hergibt
 
@@ -298,22 +399,36 @@ oben) — sonst meldet die Oberfläche eine veraltete Fassung.
 Siehe `src/config.example.yaml` als Referenz. `config.yaml` wird normalerweise
 ausschließlich über das Setup-UI erzeugt und ist gitignored.
 
+## Rückmeldung
+
+Fehler gefunden, Verbesserungsvorschlag, oder FlowBridge an einem Gerät
+betrieben, das oben nicht steht? Schreib an **dirk@cheetahlab.de**.
+
+Einen öffentlichen Issue-Tracker gibt es nicht — das Repository ist
+selbst gehostet, und Mail ist der kürzere Weg. Bei Fehlermeldungen ist das
+**Diagnosepaket** der nützlichste Anhang: Version, maskierte Konfiguration,
+Zustand der Verbindungen, Topics und Log in einem ZIP, Schlüssel geschwärzt
+und Seriennummern durch Platzhalter ersetzt. Für ein noch nicht abgedecktes
+Gerät ist das **Feldinventar** die interessante Datei — es zeigt, welche
+Felder dein Exemplar tatsächlich liefert.
+
 ## Lizenz
 
-**GNU AGPL v3** – siehe [`LICENSE`](LICENSE), Urhebervermerk und Ausnahmen in
+**Apache-Lizenz 2.0** – siehe [`LICENSE`](LICENSE), Urhebervermerk in
 [`NOTICE.md`](NOTICE.md).
 
-Benutzen, betreiben und für dich anpassen: frei und ohne Bedingungen. Wer
-FlowBridge **verändert weitergibt oder als Dienst betreibt**, muss den
-geänderten Quelltext unter derselben Lizenz zugänglich machen — auch dann,
-wenn er die Software selbst gar nicht herausgibt. Das ist der Unterschied der
-AGPL zur gewöhnlichen GPL, und für eine Weboberfläche wie diese der
-entscheidende.
+Benutzen, betreiben, anpassen, weitergeben, einbauen — frei, auch gewerblich
+und auch in geschlossenen Produkten. Zu erfüllen sind die drei Auflagen aus
+Abschnitt 4: Lizenz mitgeben, `NOTICE.md` mitgeben, veränderte Dateien als
+verändert kennzeichnen. Der Quelltext muss **nicht** offengelegt werden.
 
-Eine zweite Lizenz gibt es nicht, auch nicht gegen Bezahlung — die AGPL gilt
-für alle gleichermaßen, gewerblich wie privat. Umgekehrt heißt das: Beiträge
-kommen unter derselben Lizenz herein, und niemand muss dafür Rechte abtreten
-(siehe [`NOTICE.md`](NOTICE.md)).
+Dazu gewährt die Lizenz ausdrücklich **Patentrechte** (Abschnitt 3) — der
+Punkt, an dem sie über MIT und BSD hinausgeht.
+
+Eine zweite Lizenz gibt es nicht; sie wird auch nicht gebraucht, denn
+Apache-2.0 erlaubt schon alles, wofür man sonst eine kommerzielle Lizenz
+kauft. Name und Logo sind nicht mitlizenziert (Abschnitt 6), siehe
+[`NOTICE.md`](NOTICE.md).
 
 Die verwendeten Bibliotheken sind sämtlich permissiv lizenziert (MIT, BSD-3,
 Apache-2.0, PSF) — deshalb war der Wechsel überhaupt möglich: Permissive

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getState } from "../api";
 import type { Strings } from "../i18n";
 import type { AppConfig, DeviceStateMap } from "../types";
@@ -26,9 +26,38 @@ interface Props {
 // einem Geraet und einem Browser.
 const POLL_MS = 3_000;
 
+/** Alter des juengsten Messwerts ueber alle Geraete - oder undefined, wenn
+ *  keines eines liefert (aeltere Fassung im Container).
+ *
+ *  Das Minimum, nicht der Durchschnitt: Die Frage lautet "wie frisch ist das
+ *  Frischeste, das FlowBridge gerade hat". Einzelne alte Werte kennzeichnet
+ *  die Geraetekarte ohnehin selbst. */
+function juengstesAlter(state: DeviceStateMap): number | undefined {
+  let min: number | undefined;
+  for (const status of Object.values(state)) {
+    for (const alter of Object.values(status._alter_s ?? {})) {
+      if (min === undefined || alter < min) min = alter;
+    }
+  }
+  return min;
+}
+
+/** "vor 3 s" / "vor 4 Min" / "vor 2 Std".
+ *
+ *  Sekundengenau nur im ersten Abschnitt: Bei gesundem Meldeweg steht dort
+ *  eine einstellige Zahl, und genau die ist die Aussage. Ab einer Minute
+ *  waere Sekundengenauigkeit nur Unruhe. */
+function alterText(sekunden: number, t: Strings): string {
+  if (sekunden < 90) return `${Math.max(sekunden, 0)} s`;
+  const min = Math.round(sekunden / 60);
+  if (min < 90) return `${min} ${t.minutes}`;
+  return `${Math.round(min / 60)} ${t.hours}`;
+}
+
 export default function Dashboard({ t, config, onGoToSetup }: Props) {
   const [state, setState] = useState<DeviceStateMap>({});
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const messAlter = useMemo(() => juengstesAlter(state), [state]);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,10 +93,21 @@ export default function Dashboard({ t, config, onGoToSetup }: Props) {
 
   return (
     <div>
-      {lastUpdate && (
-        <p className="fb-muted">
-          {t.lastUpdate}: {lastUpdate.toLocaleTimeString()}
-        </p>
+      {/* Das Alter der MESSWERTE, nicht die Uhrzeit dieses Browsers.
+          Vorher stand hier `new Date()` aus dem Moment des Abrufs - eine Zahl,
+          die sich alle drei Sekunden erneuerte, auch wenn EcoFlow seit zehn
+          Minuten nichts mehr gemeldet hatte. Am 23.08.2026 stand so
+          "Zuletzt aktualisiert 19:04:25" ueber Werten von 18:59.
+          Der Abrufzeitpunkt bleibt als Rueckfallebene, falls das Backend
+          noch keine Altersangaben liefert. */}
+      {messAlter !== undefined ? (
+        <p className="fb-muted">{t.measuredAgo.replace("{d}", alterText(messAlter, t))}</p>
+      ) : (
+        lastUpdate && (
+          <p className="fb-muted">
+            {t.lastUpdate}: {lastUpdate.toLocaleTimeString()}
+          </p>
+        )
       )}
       {/* Pro Gerät eine Doppelkachel: links Messwerte + Bedienung, rechts der
           Verlauf. Auf schmalen Fenstern stapeln sie sich. */}

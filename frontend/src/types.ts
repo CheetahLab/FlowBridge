@@ -92,6 +92,12 @@ export interface DeviceStatus {
   cycles?: number;
   // Rohwerte nach Modul gruppiert (PD, BMS, EMS, INV, MPPT) für die Kontroll-Tabs
   _modules?: Record<string, Record<string, unknown>>;
+  // Alter je Messwert in Sekunden: Wie lange ist es her, dass EcoFlow diese
+  // Zahl zuletzt WIRKLICH gemeldet hat? Nur für Messwerte, nicht für
+  // Sollwerte. Siehe _MESSWERTE im Backend - EcoFlow pusht im Ruhezustand
+  // nur wenige Nachrichten pro Stunde, und quota/all spiegelt dabei nur den
+  // letzten Push.
+  _alter_s?: Record<string, number>;
   // Sekunden seit der letzten Push-Nachricht. Fehlt, solange seit dem Start
   // noch nie eine kam. Kommt nur über /api/state, bewusst nicht über MQTT -
   // siehe _stille_sekunden() im Backend.
@@ -118,7 +124,10 @@ export interface History {
 }
 
 export interface Health {
-  ecoflow_broker: { configured: boolean; connected: boolean };
+  // subscription_minutes: Alter des Melde-Abonnements. EcoFlow richtet das
+  // schnelle Melden beim Abonnieren ein, und es laeuft ab - "connected" allein
+  // sagt darueber nichts (s. MELDE_ABO_TAKT_S im Backend).
+  ecoflow_broker: { configured: boolean; connected: boolean; subscription_minutes: number | null };
   local_broker: { configured: boolean; connected: boolean; host: string };
   devices: { configured: number; online: number; offline: number; unknown: number };
 }

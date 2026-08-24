@@ -162,6 +162,32 @@ class EcoFlowClient:
         body = await self._request("GET", QUOTA_ALL_PATH, params={"sn": serial_number})
         return body["data"]
 
+    async def get_quota(self, serial_number: str, quotas: list[str]) -> dict[str, Any]:
+        """Gezielter Abruf einzelner Quota-Felder (POST /iot-open/sign/device/quota).
+
+        Der kleine Bruder von get_quota_all, laut Dev-Portal-Doku ausdruecklich
+        vorgesehen ("Delta Pro: Get the X-Boost switch value").
+
+        GEMESSEN (24.08.2026, scripts/test_meldeweg.py, 40 Runden im
+        10-Sekunden-Takt am ladenden Geraet, Ladeleistung dabei 100 -> 300 ->
+        200 -> 100 W): Dieser Weg liefert **dasselbe** wie quota/all. In
+        keiner einzigen Runde unterschieden sich die beiden, und sie aenderten
+        ihre Werte in denselben 18 Runden. Er stammt also aus demselben
+        Cloud-Cache und ist KEINE frische Messung am Geraet.
+
+        Damit ist die Hoffnung erledigt, die Anzeige ueber einen zweiten
+        Abrufweg aktuell zu halten - es gibt nur den einen, und der wartet
+        auf den Push. Die Methode bleibt fuer das Messskript und fuer den
+        Fall, dass EcoFlow das Verhalten aendert; im laufenden Betrieb wird
+        sie NICHT benutzt.
+
+        Nebenbefund: reine Push-Felder (z. B. bms_bmsStatus.inputWatts) gibt
+        auch dieser Weg nicht her - sie kommen als None zurueck.
+        """
+        body = {"sn": serial_number, "params": {"quotas": quotas}}
+        response = await self._request("POST", QUOTA_PATH, json_body=body)
+        return response.get("data") or {}
+
     async def set_quota(
         self, serial_number: str, module_type: int, operate_type: str, params: dict[str, Any]
     ) -> dict[str, Any]:

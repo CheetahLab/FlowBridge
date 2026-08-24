@@ -14,7 +14,7 @@
 <p align="center">
   <a href="https://hub.docker.com/r/cheetahlab/flowbridge"><img src="https://img.shields.io/docker/pulls/cheetahlab/flowbridge?label=Docker%20Hub&color=0A6BFF" alt="Docker Hub"></a>
   <a href="https://hub.docker.com/r/cheetahlab/flowbridge/tags"><img src="https://img.shields.io/docker/v/cheetahlab/flowbridge?sort=date&label=Version&color=0A6BFF" alt="Version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-0A6BFF" alt="License: AGPL-3.0"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-0A6BFF" alt="License: Apache-2.0"></a>
 </p>
 
 ---
@@ -31,6 +31,19 @@ list of versions and can be switched off.
 > The interface, this README and the Synology setup guide exist in English and
 > German. The remaining reference documents in `docs/` and the source comments
 > are German only.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/flowbridge-dashboard-dark-en.png">
+    <img src="assets/screenshots/flowbridge-dashboard-light-en.png" alt="FlowBridge dashboard: readings, controls, history and energy balance" width="900">
+  </picture>
+</p>
+
+<p align="center">
+  <em>Readings and controls on the left, the history on the right — and below
+  it the energy balance, showing how much of the mains power actually reaches
+  the battery.</em>
+</p>
 
 ## Quick start
 
@@ -85,7 +98,12 @@ the data folder.
 | Model | State |
 |---|---|
 | **RIVER 2 Pro** | verified against real hardware |
-| **DELTA 2** | prepared from documentation, never run on a device |
+| **DELTA 2** | under test on real hardware (field test running) |
+
+The DELTA 2 support was derived from documentation and is currently being
+tried on an actual device for the first time. Until that field test is
+evaluated it stays `documented` in the diagnostics report, not `verified` —
+the report knows only those two states, and a test in progress is not proof.
 
 Other models will show their readings but may not accept commands. The
 diagnostics report says so explicitly (`documented` instead of `verified`)
@@ -98,12 +116,24 @@ rather than glossing over it.
   charging power, charge pause — through the interface or over MQTT, both
   through the same code
 - **Home Assistant discovery** — devices appear on their own
-- **Topic export for EisBär SCADA** (channel CSV + payload profile XML)
+- **Topic export for EisBär SCADA V3/V4** (channel CSV + payload profile XML)
 - **Field inventory**: records over months which fields your device actually
   delivers — this is what makes visible when a firmware quietly adds or drops one
 - **Diagnostics package**: report, masked configuration, topics and log in one
   ZIP — keys redacted, serial numbers replaced by placeholders
 - **Interface in English and German**, light and dark, persistently configurable
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/flowbridge-module-inv-dark-en.png">
+    <img src="assets/screenshots/flowbridge-module-inv-light-en.png" alt="INV module tab: the raw values exactly as EcoFlow delivers them" width="900">
+  </picture>
+</p>
+
+<p align="center">
+  <em>Nothing hidden: behind the PD, BMS, EMS, INV and MPPT tabs sit the raw
+  values exactly as EcoFlow delivers them — under their original names.</em>
+</p>
 
 ## How it fits together
 
@@ -113,6 +143,75 @@ rather than glossing over it.
     <img src="assets/topology/flowbridge-topology-light.png" alt="Topology: EcoFlow cloud → FlowBridge → local broker" width="760">
   </picture>
 </p>
+
+## What you don't see otherwise
+
+The EcoFlow app shows you how many watts go in and how full the battery is.
+What it does not show: how much of that **arrives**.
+
+FlowBridge works it out from measured values. Input, output and battery power
+come from the device itself, the rest is subtraction — none of it is estimated
+or modelled.
+
+### Measured on a River 2 Pro
+
+| AC charge rate | at the input | into the battery | efficiency | loss |
+| --- | --- | --- | --- | --- |
+| 100 W | 105 W | 61 W | **58 %** | 42 W |
+| 200 W | 205 W | 157 W | **77 %** | 48 W |
+| 500 W | 500 W | 435 W | **87 %** | 65 W |
+
+The reason is the charger: its base draw is largely **fixed**. At 100 W it eats
+almost half of it; at 500 W nearly the same amount is spread over five times
+the energy.
+
+The three measurements sit remarkably close to a straight line:
+
+```text
+loss = 36 W + 5.8 % of the input power
+
+  100 W  ->  measured 42 W,  line 42.1 W
+  200 W  ->  measured 48 W,  line 47.9 W
+  500 W  ->  measured 65 W,  line 65.0 W
+```
+
+Largest deviation 0.1 W. So the charger draws about **36 W simply for being
+switched on**, plus just under 6 % of the power it passes through.
+
+### What that means for a full charge
+
+The River 2 Pro holds 768 Wh. From empty to full, using the figures above:
+
+| Charge rate | from the wall | duration |
+| --- | --- | --- |
+| 100 W | ~1320 Wh | ~12.6 h |
+| 200 W | ~1000 Wh | ~4.9 h |
+| 500 W | ~880 Wh | ~1.8 h |
+
+Going from 100 to 200 W saves **about 320 Wh** — going from 200 to 500 W only
+another 115 or so. The big win is right at the bottom: charging at 100 W costs
+you a third extra per charge, and you wait two and a half times as long for it.
+
+It runs against what many people bring along from phones and electric cars:
+charging slowly is not gentler here, it is simply more expensive.
+
+### Where the statement ends
+
+What this measurement does **not** say: whether a high charge rate ages the
+cells faster. Cycle count and cell temperature are not available over the open
+API (see the next section). "Cheaper" is proven, "better overall" is not.
+
+Two more caveats, so the numbers are read correctly:
+
+- The measured AC input **includes any load on the AC output**. With a consumer
+  plugged in, the figure moves regardless of the charge setting.
+- The instantaneous value fluctuates because input (INV module) and battery
+  power (BMS module) arrive at different moments. The figure **over the period**
+  is the more reliable one — which is why the dashboard shows it too.
+
+All numbers come from **one** device. Whether another River 2 Pro shows the
+same line, nobody knows — which is exactly why FlowBridge computes it for
+yours instead of claiming it.
 
 ## What the device will not give you
 
@@ -294,21 +393,34 @@ otherwise the interface will report an outdated build.
 See `src/config.example.yaml` for reference. `config.yaml` is normally produced
 exclusively through the setup UI and is gitignored.
 
+## Feedback
+
+Found a bug, got a suggestion, or ran FlowBridge on a device that is not
+listed above? Write to **dirk@cheetahlab.de**.
+
+There is no public issue tracker — the repository is self-hosted and mail is
+the shorter path. For fault reports the **diagnostics package** is the most
+useful attachment: it carries version, masked configuration, connection state,
+topics and log in one ZIP, with keys redacted and serial numbers replaced by
+placeholders. For a device not yet covered, the **field inventory** is the
+interesting file — it shows which fields your unit actually delivers.
+
 ## License
 
-**GNU AGPL v3** — see [`LICENSE`](LICENSE), copyright notice and exceptions in
+**Apache License 2.0** — see [`LICENSE`](LICENSE), copyright notice in
 [`NOTICE.md`](NOTICE.md).
 
-Using it, running it and adapting it for yourself: free and without conditions.
-Anyone who **distributes a modified version or operates it as a service** must
-make the modified source available under the same license — even if they never
-hand out the software itself. That is the difference between the AGPL and the
-ordinary GPL, and for a web interface like this one the decisive difference.
+Use it, run it, adapt it, redistribute it, build it into your own software —
+freely, commercially and in closed products too. The three conditions from
+section 4 apply: include the license, include `NOTICE.md`, and mark modified
+files as modified. The source does **not** have to be disclosed.
 
-There is no second license, not even for payment — the AGPL applies equally to
-everyone, commercial or private. Which conversely means: contributions come in
-under the same license, and nobody has to sign over any rights for them (see
-[`NOTICE.md`](NOTICE.md)).
+The license also grants **patent rights** explicitly (section 3) — the point
+where it goes beyond MIT and BSD.
+
+There is no second license, and none is needed: Apache-2.0 already permits
+everything a commercial license is usually bought for. The name and the logo
+are not licensed along with it (section 6), see [`NOTICE.md`](NOTICE.md).
 
 The libraries used are all permissively licensed (MIT, BSD-3, Apache-2.0, PSF)
 — which is what made the choice possible in the first place: permissive

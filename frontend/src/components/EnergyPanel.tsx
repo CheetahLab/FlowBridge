@@ -15,6 +15,16 @@ import type { DeviceStatus, HistoryPoint } from "../types";
 
 /** Unter dieser Leistung ist der Wirkungsgrad nur noch Rauschen. */
 const MIN_FLUSS_W = 10;
+/** Dieselbe Schwelle wie im Backend (MESSWERT_ALTER_S) und in der Geraetekarte. */
+const ALT_AB_S = 300;
+/** Diese Messwerte speisen die Momentan-Bilanz oben. */
+const BILANZ_FELDER = [
+  "ac_watts_in",
+  "dc_watts_in",
+  "watts_out",
+  "battery_watts_in",
+  "battery_watts_out",
+];
 /** Ab hier lohnt der Hinweis, mit mehr Leistung zu laden. */
 const SCHWELLE_HINWEIS = 70;
 
@@ -93,7 +103,20 @@ export default function EnergyPanel({
   // angezeigte Zahl.
   const quelle = Math.max(0, laedt ? ein - raus : entlaedt ? ausBatterie : ein);
   const ziel = laedt ? inBatterie : raus;
-  const messbar = (laedt || entlaedt || durchleitung) && quelle > MIN_FLUSS_W && ziel > 0;
+  // Ziel groesser als Quelle gibt es nicht - es hiesse, aus 154 W kaemen
+  // 156 W heraus. Genau das stand am 24.08.2026 im Bild: "101 % Wirkungsgrad".
+  // Der Grund ist kein Messfehler, sondern Gleichzeitigkeit: ac_watts_in kommt
+  // aus dem INV-Modul, battery_watts_in aus dem BMS, und beim Hoch- oder
+  // Herunterregeln treffen die beiden zeitversetzt ein. Dann beschreiben sie
+  // verschiedene Momente, und eine Division daraus ergibt keinen Wirkungsgrad.
+  //
+  // Zwei Prozent Spielraum fuer Rundung: Beide Werte kommen als ganze Watt.
+  // Darueber wird nichts geschoent und nichts geklemmt - es wird gar nichts
+  // behauptet, und in der Kachel steht "-", bis beide Seiten wieder
+  // zusammenpassen.
+  const gleichzeitig = ziel <= quelle * 1.02;
+  const messbar =
+    (laedt || entlaedt || durchleitung) && quelle > MIN_FLUSS_W && ziel > 0 && gleichzeitig;
   const verlust = messbar ? Math.max(0, quelle - ziel) : 0;
 
   // Beschriftungen haengen NUR an der Richtung, nicht daran, ob gerade etwas
@@ -121,6 +144,18 @@ export default function EnergyPanel({
   // eine Subtraktion aus drei nicht gleichzeitigen Messungen schwankt.
   // Ueber den Zeitraum integriert mitteln sich diese Versaetze heraus - das
   // ist die Zahl, auf die man sich verlassen kann.
+  // Die Momentan-Bilanz ist eine Rechnung aus drei Messwerten - ist auch nur
+  // einer davon alt, beschreibt das Ergebnis einen vergangenen Zustand.
+  // Genau so kam am 23.08.2026 ein Wirkungsgrad von 66 % zustande, waehrend
+  // das Geraet in Wirklichkeit mit 200 W lud: gerechnet aus einem AC-Eingang
+  // von 18:59 und einer Batterieleistung von 18:59, angezeigt um 19:04.
+  const alter = status?._alter_s ?? {};
+  const bilanzAlterS = Math.max(
+    0,
+    ...BILANZ_FELDER.map((feld) => alter[feld] ?? 0),
+  );
+  const bilanzVeraltet = bilanzAlterS > ALT_AB_S;
+
   const whNetto = whEin - whAus;
   const wirkungsgradZeitraum =
     whNetto >= 5 && whBatterie >= NENNENSWERT_WH ? (whBatterie / whNetto) * 100 : undefined;
@@ -141,7 +176,7 @@ export default function EnergyPanel({
       </div>
 
       {/* Immer gerendert - siehe Kommentar bei quelleLabel. */}
-      <div className="fb-energy-flow">
+      <div className={`fb-energy-flow ${bilanzVeraltet ? "fb-energy-stale" : ""}`}>
         <div className="fb-energy-node">
           <div className="fb-energy-node-value">{Math.round(quelle)} W</div>
           <div className="fb-energy-node-label">{quelleLabel}</div>
@@ -171,7 +206,13 @@ export default function EnergyPanel({
         </div>
       </div>
 
-      {laedt && wirkungsgrad !== undefined && wirkungsgrad < SCHWELLE_HINWEIS && (
+      {bilanzVeraltet && (
+        <p className="fb-energy-hint">
+          {t.staleBalance.replace("{d}", String(Math.round(bilanzAlterS / 60)))}
+        </p>
+      )}
+
+      {!bilanzVeraltet && laedt && wirkungsgrad !== undefined && wirkungsgrad < SCHWELLE_HINWEIS && (
         <p className="fb-energy-hint">{t.efficiencyHint}</p>
       )}
 

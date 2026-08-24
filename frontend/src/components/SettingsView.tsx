@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Language, Strings, Theme } from "../i18n";
 import type { AppConfig, VersionInfo } from "../types";
 import AnalysisSection from "./AnalysisSection";
@@ -9,15 +10,32 @@ import PasswordSection from "./PasswordSection";
 import SetupForm from "./SetupForm";
 
 /**
- * Einstellungsseite: getrennte Kacheln statt einer langen.
+ * Einstellungsseite in Tabs.
  *
  * Vorher hingen Passwort und Diagnose unten in der Einrichtungs-Kachel und
- * sahen aus, als gehörten sie dazu — und der Weg zurück zum Dashboard verlor
- * sich zwischen „Verbindung testen“ und „Speichern“.
+ * sahen aus, als gehörten sie dazu — der Weg zurück zum Dashboard verlor sich
+ * zwischen „Verbindung testen“ und „Speichern“. Der Rücksprung steht deshalb
+ * oben in der Kopfzeile, von jeder Kachel gleich weit weg.
  *
- * Der Rücksprung steht deshalb jetzt oben in der Kopfzeile: dort sucht man
- * ihn, und er ist von jeder Kachel aus gleich weit weg.
+ * Danach wuchs die Seite weiter: sechs Kacheln in zwei Spalten, gut zwei
+ * Bildschirmhöhen. Dirk nannte es am 24.08.2026 eine „Scrollorgie“, und das
+ * traf es — man scrollte an Diagnose und Feldinventar vorbei, um an das
+ * Passwort zu kommen.
+ *
+ * Vier Tabs statt einer Rolle. Die Einteilung folgt der Frage, WARUM man
+ * herkommt:
+ *
+ *   Einrichtung   — womit FlowBridge redet (EcoFlow, Geräte, Broker)
+ *   Darstellung   — wie es aussieht und wer hereindarf
+ *   Updates       — ob es aktuell ist
+ *   Export/Daten  — was man herausträgt (Topics, Diagnose, Feldinventar)
+ *
+ * Kein Tab-Zustand in der URL: Die Seite hat keine Routen, und ein
+ * Neuladen soll bei der Einrichtung landen — dort will man hin, wenn etwas
+ * nicht geht.
  */
+
+type Tab = "setup" | "darstellung" | "updates" | "daten";
 export default function SettingsView({
   t,
   config,
@@ -43,6 +61,14 @@ export default function SettingsView({
   // Live-Zustand: Ein Gerät, das gerade nicht meldet, gehört trotzdem dazu -
   // vielleicht ist genau das der Grund für die Mail.
   const geraeteModelle = config.ecoflow.devices.map((d) => d.model ?? "").filter(Boolean);
+  const [tab, setTab] = useState<Tab>("setup");
+
+  const tabs: { id: Tab; label: string }[] = [
+    { id: "setup", label: t.setupTitle },
+    { id: "darstellung", label: t.tabAppearance },
+    { id: "updates", label: t.updateTitle },
+    { id: "daten", label: t.tabData },
+  ];
 
   return (
     <div className="fb-settings">
@@ -53,16 +79,36 @@ export default function SettingsView({
         </button>
       </div>
 
-      {/* Links die Einrichtung (die längste Kachel), rechts die beiden
-          kurzen gestapelt. Auf schmalen Fenstern wird daraus wieder eine
-          Spalte — nebeneinander wären die Formularfelder dann zu schmal. */}
-      <div className="fb-settings-grid">
-        <SetupForm t={t} config={config} language={language} theme={theme} onSaved={onSaved} />
+      <div className="fb-tabs fb-settings-tabs" role="tablist">
+        {tabs.map((eintrag) => (
+          <button
+            key={eintrag.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === eintrag.id}
+            className={`fb-tab ${tab === eintrag.id ? "fb-tab-active" : ""}`}
+            onClick={() => setTab(eintrag.id)}
+          >
+            {eintrag.label}
+          </button>
+        ))}
+      </div>
 
-        <div className="fb-settings-col">
-          {/* Ganz oben, direkt neben der Einrichtung: Das Aussehen ist das
-              Erste, was jemand fuer sich zurechtruecken will - und es ist
-              die einzige Kachel hier, die nichts kaputtmachen kann. */}
+      {tab === "setup" && (
+        <SetupForm
+          t={t}
+          config={config}
+          language={language}
+          theme={theme}
+          onSaved={onSaved}
+          alsAbschnitt
+        />
+      )}
+
+      {/* Zwei kurze Kacheln nebeneinander statt untereinander - zusammen
+          fuellen sie knapp eine Bildschirmhoehe. */}
+      {tab === "darstellung" && (
+        <div className="fb-settings-grid fb-settings-grid-gleich">
           <div className="fb-card fb-card-wide">
             <AppearanceSection
               t={t}
@@ -74,22 +120,33 @@ export default function SettingsView({
           <div className="fb-card fb-card-wide">
             <PasswordSection t={t} />
           </div>
-          {/* Direkt unter dem Passwort: Beides sind Entscheidungen ueber die
-              Aussenwelt - wer hereindarf, und wohin FlowBridge hinausredet. */}
-          <div className="fb-card fb-card-wide">
-            <UpdateSection t={t} info={versionInfo} onGeprueft={onUpdateGeprueft} />
-          </div>
+        </div>
+      )}
+
+      {tab === "updates" && (
+        <div className="fb-card fb-card-wide">
+          <UpdateSection t={t} info={versionInfo} onGeprueft={onUpdateGeprueft} />
+        </div>
+      )}
+
+      {/* Die drei langen Kacheln. Export links, die beiden Mitschriften
+          rechts - sie gehoeren zusammen: beide schreiben mit, beide werden
+          per Mail verschickt, beide haben einen Hinweis zum Datenschutz. */}
+      {tab === "daten" && (
+        <div className="fb-settings-grid fb-settings-grid-gleich">
           <div className="fb-card fb-card-wide">
             <ExportSection t={t} />
           </div>
-          <div className="fb-card fb-card-wide">
-            <DiagnosticsSection t={t} modelle={geraeteModelle} />
-          </div>
-          <div className="fb-card fb-card-wide">
-            <AnalysisSection t={t} modelle={geraeteModelle} />
+          <div className="fb-settings-col">
+            <div className="fb-card fb-card-wide">
+              <DiagnosticsSection t={t} modelle={geraeteModelle} />
+            </div>
+            <div className="fb-card fb-card-wide">
+              <AnalysisSection t={t} modelle={geraeteModelle} />
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

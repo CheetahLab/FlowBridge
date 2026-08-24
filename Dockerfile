@@ -12,10 +12,11 @@ FROM python:3.14.6-slim
 # image.source muss auf ein OEFFENTLICH erreichbares Repository zeigen.
 # Zwei Gruende:
 #
-#   1. FlowBridge steht unter AGPL. Wer das Abbild hat, muss an den Quelltext
-#      kommen - und dieses Etikett ist die uebliche Stelle, an der man nachsieht
-#      (`docker inspect`). Ein Verweis auf ein Repository, das eine Anmeldung
-#      verlangt, waere so gut wie keiner.
+#   1. Wer das Abbild hat, soll zum Quelltext finden. Die Apache-Lizenz
+#      verlangt das nicht, aber ein Werkzeug, das man nicht nachlesen kann,
+#      taugt im Smarthome wenig - und dieses Etikett ist die uebliche Stelle,
+#      an der man nachsieht (`docker inspect`). Ein Verweis auf ein
+#      Repository, das eine Anmeldung verlangt, waere so gut wie keiner.
 #   2. Registries haengen ein Paket anhand dieses Labels an das Repository
 #      statt an das Konto. Bei GHCR taucht es sonst nur unter dem Profil auf
 #      und die Zugriffseinstellungen des Repositorys greifen nicht.
@@ -23,7 +24,7 @@ LABEL org.opencontainers.image.source="https://github.com/CheetahLab/FlowBridge"
       org.opencontainers.image.title="FlowBridge" \
       org.opencontainers.image.description="MQTT-Bruecke fuer mobile Energiespeicher von ECOFLOW" \
       org.opencontainers.image.vendor="Dirk Hofher" \
-      org.opencontainers.image.licenses="AGPL-3.0-only"
+      org.opencontainers.image.licenses="Apache-2.0"
 
 WORKDIR /app
 
@@ -62,10 +63,9 @@ COPY --from=frontend-build /build/dist/ frontend/dist/
 # man sie nachtraeglich ableiten koennte.
 COPY VERSION .
 # Die Lizenz verlangt, dass ihr Text jeder Kopie beiliegt - und das Abbild
-# IST eine Kopie. Bei der AGPL gilt das noch strenger als vorher bei MIT:
-# Wer eine veraenderte Fassung betreibt, muss den Nutzern den Quelltext
-# anbieten koennen, und der Vermerk ist der Anfang dieser Kette.
-# NOTICE.md traegt den Urhebervermerk und die Ausnahme fuer Name und Logo,
+# IST eine Kopie. Bei Apache-2.0 ist das keine Formalie, sondern eine der drei
+# Auflagen aus Abschnitt 4; NOTICE.md wird dort sogar ausdruecklich genannt.
+# NOTICE.md traegt den Urhebervermerk und den Hinweis zu Name und Logo,
 # THIRD-PARTY-NOTICES.md die Vermerke der mitgelieferten Fremdbibliotheken.
 COPY LICENSE NOTICE.md THIRD-PARTY-NOTICES.md ./
 

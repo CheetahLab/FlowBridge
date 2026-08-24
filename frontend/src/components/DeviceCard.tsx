@@ -208,24 +208,83 @@ function ModuleTable({
   );
 }
 
-/** Minuten -> "7 h 22 min". Roh sind Restzeiten unlesbar: 662 sagt niemandem
- *  etwas, 11 h 2 min sofort. Unter einer Stunde bleiben nur die Minuten. */
-function formatDauer(minuten: number | undefined): string | undefined {
+/** Restzeit als Zahl-plus-Einheit-Paare, damit "h" und "min" so klein gesetzt
+ *  werden koennen wie "W" und "%" in den uebrigen Kacheln.
+ *
+ *  Vorher war es EIN String ("4 h 14 min") mitten im grossen Wert - drei
+ *  Zahlen und zwei Einheiten in Versalhoehe, die Kachel brach um und riss die
+ *  Zeile auseinander.
+ *
+ *  Roh sind Restzeiten ohnehin unlesbar: 662 sagt niemandem etwas, 11 h 2 min
+ *  sofort. Unter einer Stunde bleiben nur die Minuten. */
+function dauerTeile(minuten: number | undefined): { wert: number; einheit: string }[] | undefined {
   if (minuten === undefined || minuten === null) return undefined;
   const h = Math.floor(minuten / 60);
   const m = minuten % 60;
-  return h > 0 ? `${h} h ${m} min` : `${m} min`;
+  return h > 0 ? [{ wert: h, einheit: "h" }, { wert: m, einheit: "min" }] : [{ wert: m, einheit: "min" }];
 }
 
-function Metric({ label, value, unit }: { label: string; value: unknown; unit?: string }) {
-  if (value === undefined || value === null) return null;
+/* Ab hier gilt ein Messwert als veraltet - dieselbe Schwelle wie im Backend
+   (MESSWERT_ALTER_S), wo sie auch begruendet steht. */
+const ALT_AB_S = 300;
+
+/** Eine Kachel. `alterS` ist das Alter des MESSWERTS, nicht das der Anfrage.
+ *
+ * Der Unterschied ist der ganze Grund fuer diese Anzeige: Am 23.08.2026 stand
+ * hier "105 W", waehrend das Geraet laengst mit 200 W lud - die Zahl war fuenf
+ * Minuten alt, und nichts an der Kachel sagte das. Eine Zahl ohne Alter
+ * behauptet Gegenwart.
+ *
+ * Sollwerte bekommen bewusst kein Alter mitgegeben (das Backend liefert es
+ * nur fuer Messwerte): Ein Ladelimit aendert sich nur, wenn jemand es
+ * aendert. */
+function Metric({
+  label,
+  value,
+  unit,
+  teile,
+  hint,
+  alterS,
+  t,
+}: {
+  label: string;
+  value?: unknown;
+  unit?: string;
+  /** Alternative zu value/unit: mehrere Zahl-Einheit-Paare (Restzeit). */
+  teile?: { wert: number; einheit: string }[];
+  /** Langform der Beschriftung als Tooltip - so bleibt das Etikett kurz,
+   *  ohne dass die Bedeutung verloren geht. */
+  hint?: string;
+  alterS?: number;
+  t?: Strings;
+}) {
+  if (teile === undefined && (value === undefined || value === null)) return null;
+  const alt = t !== undefined && alterS !== undefined && alterS > ALT_AB_S;
+  const dauer = alt ? stilleText(alterS!, t!) : "";
+  // Uhrzeit aus dem Alter zurueckrechnen statt sie mitzuschicken: So haengt
+  // sie an der Uhr des Servers, nicht an der des Browsers - eine Abweichung
+  // zwischen beiden wuerde sonst als Messalter durchgehen.
+  const stand = alt ? new Date(Date.now() - alterS! * 1000).toLocaleTimeString() : "";
   return (
-    <div className="fb-metric">
-      <div className="fb-metric-value">
-        {String(value)}
-        {unit && <span className="fb-metric-unit"> {unit}</span>}
+    <div className={`fb-metric ${alt ? "fb-metric-stale" : ""}`}>
+      <div
+        className="fb-metric-value"
+        title={alt ? t!.staleTitle.replace("{t}", stand).replace("{d}", dauer) : undefined}
+      >
+        {teile
+          ? teile.map((s) => (
+              <span key={s.einheit}>
+                {s.wert}
+                <span className="fb-metric-unit"> {s.einheit} </span>
+              </span>
+            ))
+          : String(value)}
+        {!teile && unit && <span className="fb-metric-unit"> {unit}</span>}
       </div>
-      <div className="fb-metric-label">{label}</div>
+      <div className="fb-metric-label" title={hint}>
+        {label}
+        {alt && <span className="fb-metric-age"> · {t!.ageSuffix.replace("{d}", dauer)}</span>}
+      </div>
     </div>
   );
 }
@@ -421,6 +480,11 @@ export default function DeviceCard({
   // Gerät NICHT als offline - sonst false-positive beim ersten Laden.
   const offline = status.online === false;
 
+  // Alter je Messwert (Sekunden), vom Backend zum Abrufzeitpunkt gerechnet.
+  // Fehlt es - ältere Fassung, noch keine Daten -, bleiben die Kacheln
+  // unmarkiert: lieber keine Aussage als eine erfundene.
+  const alter: Record<string, number> = status._alter_s ?? {};
+
   // Reihenfolge: laufender Entwurf > vom Gerät gemeldeter Wert > zuletzt
   // selbst gesetzter. Der gemeldete schlägt den gemerkten, weil er auch
   // Änderungen aus der EcoFlow-App mitbekommt.
@@ -503,12 +567,32 @@ export default function DeviceCard({
       ) : (
       <>
       <div className="fb-metrics">
-        <Metric label={t.soc} value={status.soc_percent} unit="%" />
-        <Metric label={t.acWattsIn} value={status.ac_watts_in} unit="W" />
-        <Metric label={t.dcWattsIn} value={status.dc_watts_in} unit="W" />
-        <Metric label={t.batteryWattsIn} value={status.battery_watts_in} unit="W" />
-        <Metric label={t.wattsOut} value={status.watts_out} unit="W" />
-        <Metric label={t.acWattsOut} value={status.ac_watts_out} unit="W" />
+        <Metric label={t.soc} value={status.soc_percent} unit="%" alterS={alter.soc_percent} t={t} />
+        <Metric label={t.acWattsIn} value={status.ac_watts_in} unit="W" alterS={alter.ac_watts_in} t={t} />
+        <Metric
+          label={t.dcWattsIn}
+          hint={t.dcWattsInHint}
+          value={status.dc_watts_in}
+          unit="W"
+          alterS={alter.dc_watts_in}
+          t={t}
+        />
+        <Metric
+          label={t.batteryWattsIn}
+          value={status.battery_watts_in}
+          unit="W"
+          alterS={alter.battery_watts_in}
+          t={t}
+        />
+        <Metric label={t.wattsOut} value={status.watts_out} unit="W" alterS={alter.watts_out} t={t} />
+        <Metric
+          label={t.acWattsOut}
+          hint={t.acWattsOutHint}
+          value={status.ac_watts_out}
+          unit="W"
+          alterS={alter.ac_watts_out}
+          t={t}
+        />
         {/* Nur EINE der beiden Zeiten ist je sinnvoll - das Geraet laedt oder
             es entlaedt. Beide dauerhaft nebeneinander zu zeigen hiesse, dass
             staendig eine davon leer ist. Das Backend liefert deshalb genau die
@@ -516,17 +600,31 @@ export default function DeviceCard({
             darueber steht. */}
         <Metric
           label={status.charge_remain_min !== undefined ? t.chargeRemain : t.dischargeRemain}
-          value={formatDauer(
+          teile={dauerTeile(
             status.charge_remain_min !== undefined
               ? status.charge_remain_min
               : status.discharge_remain_min,
           )}
+          alterS={
+            status.charge_remain_min !== undefined
+              ? alter.charge_remain_min
+              : alter.discharge_remain_min
+          }
+          t={t}
         />
+        {/* Spannung und Frequenz sind Sollwerte aus acOutCfg, keine Messung -
+            deshalb ohne Altersangabe. */}
         <Metric label={t.acVoltage} value={status.ac_output_voltage} unit="V" />
         <Metric label={t.acFreq} value={status.ac_output_freq_hz} unit="Hz" />
-        <Metric label={t.carWatts} value={status.car_watts} unit="W" />
-        <Metric label={t.usb1Watts} value={status.usb1_watts} unit="W" />
-        <Metric label={t.typec1Watts} value={status.typec1_watts} unit="W" />
+        <Metric label={t.carWatts} value={status.car_watts} unit="W" alterS={alter.car_watts} t={t} />
+        <Metric label={t.usb1Watts} value={status.usb1_watts} unit="W" alterS={alter.usb1_watts} t={t} />
+        <Metric
+          label={t.typec1Watts}
+          value={status.typec1_watts}
+          unit="W"
+          alterS={alter.typec1_watts}
+          t={t}
+        />
       </div>
 
       {/* Bedienung nur bei verifiziertem Modell: EcoFlow quittiert Befehle
@@ -539,64 +637,35 @@ export default function DeviceCard({
         </p>
       ) : (
       <>
+      {/* Ueberschrift statt Trennlinie.
+          Oben stehen Messwerte und die Modul-Tabs, darunter beginnt etwas
+          anderes: Dinge, die man ANFASST. Eine blosse Linie sagt "es geht
+          weiter", nicht "hier faengt ein anderer Teil an". Die Ueberschrift
+          nimmt die Form des Geraetenamens auf (dasselbe h3 in der Karte) und
+          fuellt die Karte zugleich nach unten aus. */}
+      <h3 className="fb-section-title">{t.controlTitle}</h3>
       {supportLevel === "documented" && (
         <p className="fb-muted fb-charge-note">{t.documentedOnly}</p>
       )}
-      <ToggleRow
-        t={t}
-        label={t.acOutput}
-        property="ac_output_enabled"
-        enabled={status.ac_output_enabled}
-        syncing={syncing}
-        disabled={offline || pending === "ac_output_enabled"}
-        onToggle={toggle}
-      />
-      <ToggleRow
-        t={t}
-        label={t.xboost}
-        property="xboost_enabled"
-        enabled={status.xboost_enabled}
-        syncing={syncing}
-        disabled={offline || pending === "xboost_enabled"}
-        onToggle={toggle}
-      />
-      <ToggleRow
-        t={t}
-        label={t.carOutput}
-        property="car_output_enabled"
-        enabled={status.car_output_enabled}
-        syncing={syncing}
-        disabled={offline || pending === "car_output_enabled"}
-        onToggle={toggle}
-      />
-      <LimitRow
-        t={t}
-        label={t.chargeLimit}
-        property="charge_limit_percent"
-        value={status.charge_limit_percent}
-        draft={limitDrafts.charge_limit_percent}
-        onDraft={setLimitDraft}
-        syncing={syncing}
-        disabled={offline || pending === "charge_limit_percent"}
-        onCommit={setLimit}
-      />
-      <LimitRow
-        t={t}
-        label={t.dischargeLimit}
-        property="discharge_limit_percent"
-        value={status.discharge_limit_percent}
-        draft={limitDrafts.discharge_limit_percent}
-        onDraft={setLimitDraft}
-        syncing={syncing}
-        disabled={offline || pending === "discharge_limit_percent"}
-        onCommit={setLimit}
-      />
+
+      {/* Zuerst das, wofuer man die Karte aufmacht.
+          Vorher standen AC-Ausgang, X-Boost, KFZ-Ausgang und die beiden
+          Limits davor - vier Zeilen, die man selten anfasst, ueber der einen,
+          die man staendig braucht. Dirks Reihung: erst AC-Laden und
+          Ladeleistung, dann der Rest. */}
       {/* AC-Ladeleistung: 100-870 W in 50er-Schritten. Der eingestellte Wert
           ist über die API NICHT auslesbar - angezeigt wird deshalb nur, was
           FlowBridge zuletzt selbst gesetzt hat (nach Neustart wieder leer). */}
       {/* AC-Laden pausieren: undokumentiert, aber am Gerät verifiziert
           (chgPauseFlag). Ersetzt das Aus- und Einschalten einer Steckdose. */}
-      <div className="fb-toggle-row">
+      {/* Zwei der drei Erklaersaetze - Ladeleistung und Backup-Reserve -
+          stehen als Tooltip am Etikett; sie machten zusammen ein gutes Stueck
+          der Kartenhoehe aus und werden genau einmal gelesen.
+          DIESER hier bleibt sichtbar, auf Dirks Wunsch: "Klick pausiert" ist
+          keine Erlaeuterung, sondern eine Bedienanweisung - und die gehoert
+          nicht hinter einen Mauszeiger, den es auf dem Telefon gar nicht
+          gibt. */}
+      <div className="fb-toggle-row fb-toggle-row-lead">
         <span>
           {t.acCharging}
           {syncing === "ac_charging_enabled" && (
@@ -612,7 +681,7 @@ export default function DeviceCard({
           {chargingPaused ? t.paused : t.charging}
         </button>
       </div>
-      <p className="fb-muted fb-charge-note">{t.acChargingHint}</p>
+      <p className="fb-muted fb-charge-note fb-note-tight">{t.acChargingHint}</p>
 
       <div className="fb-charge-row">
         <div className="fb-toggle-row fb-charge-head">
@@ -677,17 +746,90 @@ export default function DeviceCard({
             laeuft - der Abstand 820->870 ist auf der Skala derselbe wie
             100->150. */}
         <div className="fb-slider-scale" aria-hidden="true">
-          {chargeSteps.map((w, i) => (
-            <span className="fb-slider-tick" key={w}>
-              {w % 200 === 100 || i === chargeSteps.length - 1 ? (
-                <span className="fb-slider-tick-label">{w}</span>
-              ) : null}
-            </span>
-          ))}
+          {chargeSteps.map((w, i) => {
+            // Beschriftet wird jeder volle Hunderter plus die letzte Stufe.
+            // Vorher nur jeder zweite Hunderter (100/300/500/700) - auf einer
+            // Skala von 100 bis 870 blieb dazwischen viel unbeschriftete
+            // Flaeche, und man musste abzaehlen, wo man landet.
+            const beschriftet = w % 100 === 0 || i === chargeSteps.length - 1;
+            return (
+              <span
+                className={`fb-slider-tick ${beschriftet ? "fb-slider-tick-major" : ""}`}
+                key={w}
+              >
+                {beschriftet ? <span className="fb-slider-tick-label">{w}</span> : null}
+              </span>
+            );
+          })}
         </div>
-        <p className="fb-muted fb-charge-note">
+        <p className="fb-muted fb-charge-note" title={t.chargePowerHintLong}>
           {!chargeKnown && chargeDraft === null ? t.chargePowerUnknown : t.chargePowerHint}
         </p>
+      </div>
+
+      {/* Zweispaltig: Das sind Schalter und Grenzwerte, die man einmal setzt.
+          Untereinander ergaben sie eine Liste, die die Karte doppelt so hoch
+          machte wie den Verlauf daneben. Auf schmalen Fenstern faellt das
+          Raster von selbst auf eine Spalte zurueck (siehe app.css). */}
+      <div className="fb-control-grid">
+      <ToggleRow
+        t={t}
+        label={t.acOutput}
+        property="ac_output_enabled"
+        enabled={status.ac_output_enabled}
+        syncing={syncing}
+        disabled={offline || pending === "ac_output_enabled"}
+        onToggle={toggle}
+      />
+      <ToggleRow
+        t={t}
+        label={t.xboost}
+        property="xboost_enabled"
+        enabled={status.xboost_enabled}
+        syncing={syncing}
+        disabled={offline || pending === "xboost_enabled"}
+        onToggle={toggle}
+      />
+      <ToggleRow
+        t={t}
+        label={t.carOutput}
+        property="car_output_enabled"
+        enabled={status.car_output_enabled}
+        syncing={syncing}
+        disabled={offline || pending === "car_output_enabled"}
+        onToggle={toggle}
+      />
+      </div>
+
+      {/* Eigenes Raster je Gruppe statt eines durchlaufenden.
+          Im gemeinsamen Raster fuellten die Zeilen einfach der Reihe nach auf,
+          und dabei landete "Ladelimit" neben dem KFZ-Ausgang, waehrend
+          "Entladelimit" allein in der naechsten Zeile stand. Zusammengehoerendes
+          steht jetzt nebeneinander: die beiden Grenzwerte, und darunter die
+          beiden Reserve-Zeilen. */}
+      <div className="fb-control-grid">
+      <LimitRow
+        t={t}
+        label={t.chargeLimit}
+        property="charge_limit_percent"
+        value={status.charge_limit_percent}
+        draft={limitDrafts.charge_limit_percent}
+        onDraft={setLimitDraft}
+        syncing={syncing}
+        disabled={offline || pending === "charge_limit_percent"}
+        onCommit={setLimit}
+      />
+      <LimitRow
+        t={t}
+        label={t.dischargeLimit}
+        property="discharge_limit_percent"
+        value={status.discharge_limit_percent}
+        draft={limitDrafts.discharge_limit_percent}
+        onDraft={setLimitDraft}
+        syncing={syncing}
+        disabled={offline || pending === "discharge_limit_percent"}
+        onCommit={setLimit}
+      />
       </div>
 
       {/* Backup-Reserve ist ein Sollwert (watthConfig), kein Messwert -
@@ -704,22 +846,32 @@ export default function DeviceCard({
           nachweislich nichts tut, laesst den Fehler beim Benutzer suchen. */}
       {backupNurLesbar ? (
         <>
+          <div className="fb-control-grid">
           <div className="fb-toggle-row">
-            <span>{t.backupReserve}</span>
+            <span title={t.backupReserveReadonly}>{t.backupReserve}</span>
             <span className="fb-readonly-value">
               {status.backup_reserve_enabled ? t.on : t.off}
             </span>
           </div>
           {status.backup_reserve_percent !== undefined && (
             <div className="fb-toggle-row">
-              <span>{t.backupReserveLevel}</span>
+              <span title={t.backupReserveReadonly}>{t.backupReserveLevel}</span>
               <span className="fb-readonly-value">{status.backup_reserve_percent} %</span>
             </div>
           )}
-          <p className="fb-muted fb-charge-note">{t.backupReserveReadonly}</p>
+          </div>
+          {/* Kurzer sichtbarer Hinweis statt nur des Tooltips: Die beiden
+              Zeilen sehen aus wie Bedienelemente, sind aber reine Anzeige -
+              das River 2 Pro nimmt watthConfig ueber die offene
+              Schnittstelle nicht an (14.08.2026 am Geraet gemessen). Wer das
+              nicht weiss, klickt und wundert sich. */}
+          <p className="fb-muted fb-charge-note" title={t.backupReserveReadonly}>
+            {t.backupReserveReadonlyShort}
+          </p>
         </>
       ) : (
         <>
+          <div className="fb-control-grid">
           <ToggleRow
             t={t}
             label={t.backupReserve}
@@ -744,6 +896,7 @@ export default function DeviceCard({
             }
             onCommit={setLimit}
           />
+          </div>
           {status.backup_reserve_enabled === 0 && (
             <p className="fb-muted fb-charge-note">{t.backupReserveOff}</p>
           )}

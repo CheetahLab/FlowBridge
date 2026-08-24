@@ -23,9 +23,43 @@ nicht dabei.
 
 ## MQTT-Live-Push vs. REST-Polling
 
-Der Push ist der eigentliche Live-Kanal: neue Werte kommen in ~2–3 Sekunden
-an, während `quota/all` teils über eine Minute hinterherhinkt. FlowBridge
-nutzt beides — Push für Echtzeit, REST als träges Sicherheitsnetz.
+Der Push ist der eigentliche Live-Kanal: neue Werte kommen in ~2–3 Sekunden an.
+
+`quota/all` ist **kein zweiter Messweg**, sondern die Kopie des letzten Push.
+Am 24.08.2026 gemessen (`scripts/test_meldeweg.py`, 40 Runden im
+10-Sekunden-Takt am ladenden Gerät): `quota/all` und der gezielte Einzelabruf
+`POST /iot-open/sign/device/quota` unterschieden sich in **keiner** Runde und
+änderten ihre Werte in denselben 18. Bleibt der Push aus, liefert REST
+unbegrenzt lange dieselbe alte Zahl weiter — mit HTTP 200 und bei jedem Aufruf
+frisch gestempelt. Belegt auch andersherum: 22 Stunden „online" nach einem
+Stromausfall (16.08.2026).
+
+REST holt also nur nach, was während eines Verbindungsabbruchs an FlowBridge
+vorbeiging. Gegen ein schweigendes Gerät hilft es nicht.
+
+### Das Melde-Abonnement — und warum es abläuft
+
+Wie oft das Gerät pusht, entscheidet EcoFlow **beim Abonnieren**: Eine Sekunde
+nach jedem `subscribe` kommt eine `setReportCfg`-Nachricht herein, danach
+meldet das Gerät im Sekundentakt. Diese Einrichtung ist nicht dauerhaft.
+
+Am eigenen River 2 Pro gemessen:
+
+| Zeitpunkt | Ereignis | Median-Abstand danach |
+| --- | --- | --- |
+| 19.08. 09:14:57 | verbinden + abonnieren, 09:14:58 `setReportCfg` | **3,0 s** |
+| 20.08. 22:28:20 | nach 37 h 13 min, ohne Verbindungsabbruch | **899 s** |
+| 23.08. 20:20:14 | EcoFlow-App geöffnet, vier `setReportCfg` | **3,0 s** |
+| 24.08. 06:56 | frisch verbundene Instanz, App geschlossen | **3,0 s** |
+
+Der Container lief dabei durchgehend (Diagnosebericht: „Laufzeit 107 h 9 min"),
+die Verbindung riss nie ab. Wer die EcoFlow-App offen hatte, erneuerte das
+Abonnement unbemerkt mit; ohne App verfällt es. Im langsamen Zustand kamen
+0,6 Meldungen pro Minute statt 20,3 — Faktor 34.
+
+Deshalb baut FlowBridge seine EcoFlow-Verbindung von Zeit zu Zeit neu auf
+(`_melde_abo_pflegen()` in `src/app.py`) und führt das Alter jedes Messwerts
+mit, damit ein alter Wert nicht als aktueller durchgeht.
 
 Jede Push-Nachricht trägt einen Modul-Ausschnitt mit **un-präfigierten**
 Feldnamen plus einen `typeCode`, aus dem sich das `quota/all`-Präfix ableitet:
@@ -204,8 +238,13 @@ Beides ist in `commands_river2.py` berücksichtigt und in
 `tests/test_commands_river2.py` festgenagelt.
 
 **Zwei Fallstricke bei der Messung:**
-- Die Umstellung braucht **20–50 s**, bis sie sich am Eingang zeigt. Schnell
-  aufeinanderfolgende Änderungen sehen deshalb aus, als würde nichts passieren.
+- Wie schnell sich die Umstellung am Eingang zeigt, hängt **nicht** am Gerät,
+  sondern am Melde-Abonnement (siehe oben). Bei frischem Abo am 24.08.2026
+  gemessen: Befehl 300 W um 07:01:12, Push mit 330 W um **07:01:15** — 3
+  Sekunden; ebenso 200 W (4 s) und 100 W (1 s). Hier stand vorher „20–50 s",
+  und das war schon eine Folge des alternden Abos. Bei abgelaufenem Abo sind es
+  Minuten: am 23.08. lagen zwischen Befehl und erster Meldung **7,4 Minuten**,
+  während das Gerät längst hochgeregelt hatte.
 - Der gemessene AC-Eingang ist **Ladeleistung + AC-Ausgangslast**. Hängt ein
   Verbraucher dran (im Test ein Sunlu S2, der thermostatgesteuert pulst),
   wandert der Messwert unabhängig von der Einstellung.

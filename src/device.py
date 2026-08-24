@@ -181,17 +181,38 @@ def _restzeiten_aufloesen(result: dict[str, Any]) -> None:
             result.pop(feld, None)
 
 
-def normalize_quota(sn: str, quota: dict[str, Any]) -> dict[str, Any]:
-    """quota/all-Antwort (oder MQTT-quota-Push) -> neutraler Status-Dict fuers Dashboard/MQTT."""
+def normalize_quota(sn: str, quota: dict[str, Any]) -> tuple[dict[str, Any], dict[str, str]]:
+    """quota/all-Antwort (oder MQTT-quota-Push) -> neutraler Status-Dict fuers Dashboard/MQTT.
+
+    Zweiter Rueckgabewert: metric -> Quota-Feld, aus dem der Wert stammt.
+    Den braucht der Aufrufer, um das ALTER eines Messwerts zu bestimmen -
+    gezaehlt wird die Zeit am Rohfeld, nicht an der Metrik. Ohne diese
+    Zuordnung waere nicht zu unterscheiden, ob `ac_watts_in` aus `inv.` oder
+    aus einem Ersatzkandidaten kam, und die Altersangabe haette den falschen
+    Bezug (s. app.py, _MESSWERTE).
+    """
     result: dict[str, Any] = {"sn": sn}
+    quellen: dict[str, str] = {}
     for metric, candidates in _METRIC_CANDIDATES.items():
         for key in candidates:
             if key in quota:
                 result[metric] = quota[key]
+                quellen[metric] = key
                 break
+    remain_key = quellen.pop("_remain_raw", None)
     _restzeiten_aufloesen(result)
+    # Die beiden Restzeiten entstehen erst in _restzeiten_aufloesen und tragen
+    # deshalb nie die Quelle, die sie wirklich speist. pd.remainTime schlaegt
+    # dabei den Kandidaten aus der Liste: Es ist das Feld, das sich auf echter
+    # Hardware bewegt (s. Docstring dort) - und damit auch das, dessen Alter
+    # etwas aussagt.
+    for feld in ("charge_remain_min", "discharge_remain_min"):
+        if feld not in result:
+            quellen.pop(feld, None)
+        elif remain_key:
+            quellen[feld] = remain_key
     # Rohfelder zusaetzlich mitgeben, nach Modul gruppiert - speist die
     # Kontroll-Tabs (MPPT/BMS/...) im UI. Nichts geht verloren, auch Felder
     # ohne eigene Metrik bleiben sichtbar.
     result["_modules"] = group_by_module(quota)
-    return result
+    return result, quellen

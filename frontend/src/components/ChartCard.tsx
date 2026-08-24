@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getHistory } from "../api";
 import type { Strings } from "../i18n";
 import type { DeviceStatus, HistoryPoint } from "../types";
@@ -14,8 +14,11 @@ import EnergyPanel from "./EnergyPanel";
  */
 
 const POLL_MS = 15_000;
+/* Dieselbe Schwelle wie im Backend (MESSWERT_ALTER_S) und in der Geraetekarte. */
+const ALT_AB_S = 300;
+/* Rueckfallbreite, bis der ResizeObserver das erste Mal gemessen hat. */
 const BREITE = 560;
-const HOEHE = 200;
+const HOEHE = 220;
 const PAD = { links: 34, rechts: 40, oben: 12, unten: 22 };
 
 interface Serie {
@@ -39,6 +42,32 @@ export default function ChartCard({
   const [punkte, setPunkte] = useState<HistoryPoint[]>([]);
   const [minuten, setMinuten] = useState(60);
   const [aus, setAus] = useState<Set<string>>(new Set());
+
+  /* Die Zeichenflaeche wird in ECHTEN Pixeln aufgespannt, nicht in einem
+     festen Koordinatensystem, das die Breite hochskaliert.
+     
+     Vorher stand hier `viewBox="0 0 560 200"` bei `width: 100%`. Auf einem
+     breiten Bildschirm streckt der Browser dann ALLES mit: Bei 1650 px
+     Kartenbreite ist das Faktor 2,95, die 9-px-Achsenbeschriftung erscheint
+     mit 27 px, und der Chart wird 590 px hoch. Dirk am 24.08.2026 im
+     Vollbild: "der Plotter springt einem ins Gesicht".
+     
+     Mit der gemessenen Breite als viewBox entspricht eine SVG-Einheit genau
+     einem Pixel. Die Schrift bleibt 9 px, die Hoehe bleibt, und breiter wird
+     nur das, was breiter werden soll: die Zeitachse. */
+  const flaeche = useRef<HTMLDivElement>(null);
+  const [breite, setBreite] = useState(BREITE);
+  useEffect(() => {
+    const el = flaeche.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const beobachter = new ResizeObserver((eintraege) => {
+      const gemessen = Math.round(eintraege[0].contentRect.width);
+      // Untergrenze, damit die Achsenbeschriftung nicht in die Kurve rutscht.
+      if (gemessen > 0) setBreite(Math.max(gemessen, 320));
+    });
+    beobachter.observe(el);
+    return () => beobachter.disconnect();
+  }, []);
 
   useEffect(() => {
     let abgebrochen = false;
@@ -72,6 +101,11 @@ export default function ChartCard({
 
   const sichtbar = serien.filter((s) => !aus.has(s.feld as string));
 
+  // Alter je Messwert (s. DeviceCard). In der Legende steht der zuletzt
+  // AUFGEZEICHNETE Wert - waehrend einer Meldeluecke ist das der letzte vor
+  // der Luecke, und ohne Kennzeichnung sieht er aus wie der aktuelle.
+  const alter: Record<string, number> = status?._alter_s ?? {};
+
   const maxWatt = useMemo(() => {
     let m = 0;
     for (const p of punkte) {
@@ -102,7 +136,7 @@ export default function ChartCard({
   const t1 = punkte[punkte.length - 1].t;
   const spanne = Math.max(1, t1 - t0);
   const x = (p: HistoryPoint) =>
-    PAD.links + ((p.t - t0) / spanne) * (BREITE - PAD.links - PAD.rechts);
+    PAD.links + ((p.t - t0) / spanne) * (breite - PAD.links - PAD.rechts);
   const y = (wert: number, achse: Serie["achse"]) => {
     const anteil = achse === "prozent" ? wert / 100 : wert / maxWatt;
     return HOEHE - PAD.unten - anteil * (HOEHE - PAD.oben - PAD.unten);
@@ -144,7 +178,8 @@ export default function ChartCard({
         </div>
       </div>
 
-      <svg className="fb-chart" viewBox={`0 0 ${BREITE} ${HOEHE}`} role="img" aria-label={name}>
+      <div className="fb-chart-flaeche" ref={flaeche}>
+      <svg className="fb-chart" viewBox={`0 0 ${breite} ${HOEHE}`} role="img" aria-label={name}>
         {/* waagerechte Hilfslinien + beide Achsenbeschriftungen */}
         {[0, 0.25, 0.5, 0.75, 1].map((f) => {
           const yy = HOEHE - PAD.unten - f * (HOEHE - PAD.oben - PAD.unten);
@@ -152,7 +187,7 @@ export default function ChartCard({
             <g key={f}>
               <line
                 x1={PAD.links}
-                x2={BREITE - PAD.rechts}
+                x2={breite - PAD.rechts}
                 y1={yy}
                 y2={yy}
                 stroke="var(--fb-line)"
@@ -161,7 +196,7 @@ export default function ChartCard({
               <text x={PAD.links - 5} y={yy + 3} className="fb-chart-tick" textAnchor="end">
                 {Math.round(f * 100)}%
               </text>
-              <text x={BREITE - PAD.rechts + 5} y={yy + 3} className="fb-chart-tick">
+              <text x={breite - PAD.rechts + 5} y={yy + 3} className="fb-chart-tick">
                 {Math.round(f * maxWatt)}W
               </text>
             </g>
@@ -170,7 +205,7 @@ export default function ChartCard({
         <text x={PAD.links} y={HOEHE - 6} className="fb-chart-tick">
           {uhrzeit(t0)}
         </text>
-        <text x={BREITE - PAD.rechts} y={HOEHE - 6} className="fb-chart-tick" textAnchor="end">
+        <text x={breite - PAD.rechts} y={HOEHE - 6} className="fb-chart-tick" textAnchor="end">
           {uhrzeit(t1)}
         </text>
 
@@ -178,12 +213,14 @@ export default function ChartCard({
           <path key={s.feld as string} d={pfad(s)} fill="none" stroke={s.farbe} strokeWidth="1.8" />
         ))}
       </svg>
+      </div>
 
       <div className="fb-chart-legend">
         {serien.map((s) => {
           const anzeigen = !aus.has(s.feld as string);
           const letzter = [...punkte].reverse().find((p) => typeof p[s.feld] === "number");
           const wert = letzter ? (letzter[s.feld] as number) : undefined;
+          const veraltet = (alter[s.feld as string] ?? 0) > ALT_AB_S;
           return (
             <button
               key={s.feld as string}
@@ -201,7 +238,7 @@ export default function ChartCard({
               <span className="fb-legend-dot" style={{ background: s.farbe }} />
               {s.label}
               {wert !== undefined && (
-                <span className="fb-legend-value">
+                <span className={`fb-legend-value ${veraltet ? "fb-legend-stale" : ""}`}>
                   {wert}
                   {s.achse === "prozent" ? "%" : "W"}
                 </span>

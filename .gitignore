@@ -1,4 +1,8 @@
 config.yaml
+# Sicherungen der Konfiguration - sie tragen das Schluesselpaar im Klartext.
+config.yaml.bak*
+# Feldinventar: enthaelt die Seriennummer unmaskiert (s. src/inventar.py).
+feldinventar.json
 scripts/quota_dump_*.json
 scripts/mqtt_fields_*.json
 __pycache__/
