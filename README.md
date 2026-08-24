@@ -34,8 +34,8 @@ list of versions and can be switched off.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/flowbridge-dashboard-dark-en.png">
-    <img src="assets/screenshots/flowbridge-dashboard-light-en.png" alt="FlowBridge dashboard: readings, controls, history and energy balance" width="900">
+    <source media="(prefers-color-scheme: light)" srcset="assets/screenshots/flowbridge-dashboard-light-en.png">
+    <img src="assets/screenshots/flowbridge-dashboard-dark-en.png" alt="FlowBridge dashboard: readings, controls, history and energy balance" width="900">
   </picture>
 </p>
 
@@ -125,8 +125,8 @@ rather than glossing over it.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/flowbridge-module-inv-dark-en.png">
-    <img src="assets/screenshots/flowbridge-module-inv-light-en.png" alt="INV module tab: the raw values exactly as EcoFlow delivers them" width="900">
+    <source media="(prefers-color-scheme: light)" srcset="assets/screenshots/flowbridge-module-inv-light-en.png">
+    <img src="assets/screenshots/flowbridge-module-inv-dark-en.png" alt="INV module tab: the raw values exactly as EcoFlow delivers them" width="900">
   </picture>
 </p>
 
@@ -139,8 +139,8 @@ rather than glossing over it.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/topology/flowbridge-topology-dark.png">
-    <img src="assets/topology/flowbridge-topology-light.png" alt="Topology: EcoFlow cloud → FlowBridge → local broker" width="760">
+    <source media="(prefers-color-scheme: light)" srcset="assets/topology/flowbridge-topology-light.png">
+    <img src="assets/topology/flowbridge-topology-dark.png" alt="Topology: EcoFlow cloud → FlowBridge → local broker" width="760">
   </picture>
 </p>
 

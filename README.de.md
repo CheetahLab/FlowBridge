@@ -35,8 +35,8 @@ mit deinem Broker. Sonst mit niemandem — bis auf die Update-Prüfung, die eine
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/flowbridge-dashboard-dark-de.png">
-    <img src="assets/screenshots/flowbridge-dashboard-light-de.png" alt="FlowBridge-Dashboard: Messwerte, Steuerung, Verlauf und Energiebilanz" width="900">
+    <source media="(prefers-color-scheme: light)" srcset="assets/screenshots/flowbridge-dashboard-light-de.png">
+    <img src="assets/screenshots/flowbridge-dashboard-dark-de.png" alt="FlowBridge-Dashboard: Messwerte, Steuerung, Verlauf und Energiebilanz" width="900">
   </picture>
 </p>
 
@@ -127,8 +127,8 @@ statt es zu verschweigen.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/flowbridge-module-inv-dark-de.png">
-    <img src="assets/screenshots/flowbridge-module-inv-light-de.png" alt="Modul-Tab INV: die Rohwerte, so wie EcoFlow sie liefert" width="900">
+    <source media="(prefers-color-scheme: light)" srcset="assets/screenshots/flowbridge-module-inv-light-de.png">
+    <img src="assets/screenshots/flowbridge-module-inv-dark-de.png" alt="Modul-Tab INV: die Rohwerte, so wie EcoFlow sie liefert" width="900">
   </picture>
 </p>
 
@@ -141,8 +141,8 @@ statt es zu verschweigen.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/topology/flowbridge-topology-dark.png">
-    <img src="assets/topology/flowbridge-topology-light.png" alt="Topologie: EcoFlow-Cloud → FlowBridge → lokaler Broker" width="760">
+    <source media="(prefers-color-scheme: light)" srcset="assets/topology/flowbridge-topology-light.png">
+    <img src="assets/topology/flowbridge-topology-dark.png" alt="Topologie: EcoFlow-Cloud → FlowBridge → lokaler Broker" width="760">
   </picture>
 </p>
 
