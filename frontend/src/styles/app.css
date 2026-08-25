@@ -1086,6 +1086,24 @@ input[type="number"]::-webkit-inner-spin-button {
   font-weight: 600;
 }
 
+/* Bewusst als Textlink und nicht als zweiter Knopf: Daneben steht bereits
+   die orange Update-Anzeige. Zwei kraeftige Flaechen nebeneinander wuerden
+   um dieselbe Aufmerksamkeit streiten, und die Nummer ist die wichtigere. */
+.fb-whats-new {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.2rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  color: var(--fb-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.fb-whats-new:hover {
+  text-decoration-thickness: 2px;
+}
+
 .fb-toggle-icon {
   min-width: 2rem;
   font-size: 0.95rem;

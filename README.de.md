@@ -244,12 +244,14 @@ Einzelheiten in [`docs/quota-fields-river2.md`](docs/quota-fields-river2.md).
 | **[Synology setup — English](docs/FlowBridge-Synology-EN.pdf)** | dieselbe Anleitung auf Englisch · auch als [HTML](docs/FlowBridge-Synology-EN.html) |
 | [MQTT-Topics](docs/mqtt-topics.md) | vollständige Topic-Liste |
 | [Feldabgleich River 2 Pro](docs/quota-fields-river2.md) | was die Schnittstelle liefert — und was nicht |
+| **[Änderungen](CHANGELOG.de.md)** | was jede Fassung gebracht hat · [English](CHANGELOG.md) |
 
 Dieses Repository ist ein **Spiegel**, kein Arbeitsverzeichnis: Jede
 veröffentlichte Fassung steht hier als ein Commit, die eigentliche Entwicklung
-läuft woanders. Was sich zwischen zwei Fassungen geändert hat, zeigt deshalb
-der Vergleich zweier Commits — die Nummer dazu steht in [`VERSION`](VERSION)
-und als unveränderliche Marke am zugehörigen Abbild auf Docker Hub.
+läuft woanders. Was sich zwischen zwei Fassungen geändert hat, steht deshalb
+im [Änderungsprotokoll](CHANGELOG.de.md) — die Nummer dazu in
+[`VERSION`](VERSION) und als unveränderliche Marke am zugehörigen Abbild auf
+Docker Hub.
 
 ## Lokale Entwicklung
 

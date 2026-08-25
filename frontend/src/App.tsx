@@ -193,6 +193,22 @@ export default function App() {
                     : t.updateUnknown}
             </button>
           )}
+          {/* Der Weg vom Hinweis zur Antwort. "Update verfuegbar" loest die
+              Frage aus, was denn drin ist - ohne Antwort bleibt nur
+              Aktualisieren auf Verdacht oder Ignorieren, und Ignorieren
+              gewoehnt man sich schneller an. Nur bei tatsaechlich
+              verfuegbarem Update sichtbar, sonst waere es Dauerdekoration. */}
+          {angemeldet && view !== "setup" && updateStatus === "update" && (
+            <a
+              className="fb-whats-new"
+              href={t.changelogUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              title={t.whatsNewHint}
+            >
+              {t.whatsNew}
+            </a>
+          )}
           {/* Reihenfolge nach Aufgabe, nicht nach Entstehung:
               nachschlagen (Hilfe, Info) - aendern (Einstellungen) -
               Darstellung (Sprache, Thema) - gehen (Abmelden).

@@ -132,6 +132,9 @@ export const strings = {
     updateUnknown: "Version nicht geprüft",
     updateHint: "Die Update-Prüfung ist noch nicht eingerichtet.",
     updateClickHint: "Klicken, um jetzt auf Updates zu prüfen",
+    whatsNew: "Was ist neu?",
+    whatsNewHint: "Änderungen dieser Fassung nachlesen (öffnet GitHub)",
+    changelogUrl: "https://github.com/CheetahLab/FlowBridge/blob/main/CHANGELOG.de.md",
     updateTitle: "Updates",
     updateSectionHint:
       "FlowBridge sieht nach, ob es eine neuere Fassung gibt – beim Start und danach alle sechs Stunden.",
@@ -387,6 +390,9 @@ export const strings = {
     updateUnknown: "Version not checked",
     updateHint: "The update check is not set up yet.",
     updateClickHint: "Click to check for updates now",
+    whatsNew: "What's new?",
+    whatsNewHint: "Read what changed in this version (opens GitHub)",
+    changelogUrl: "https://github.com/CheetahLab/FlowBridge/blob/main/CHANGELOG.md",
     updateTitle: "Updates",
     updateSectionHint:
       "FlowBridge checks whether a newer version exists – at startup and every six hours after that.",

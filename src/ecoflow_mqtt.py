@@ -37,6 +37,7 @@ from __future__ import annotations
 import json
 import logging
 import ssl
+import threading
 from typing import Callable
 
 import paho.mqtt.client as mqtt
@@ -71,6 +72,16 @@ class EcoFlowMqttListener:
         self._on_quota = on_quota
         self._on_status = on_status
         self._subscribed_sns: set[str] = set()
+        # Was auf DIESER Verbindung bereits abonniert ist. Zwei Wege fuehren
+        # zum subscribe: subscribe_device() aus dem asyncio-Loop und
+        # _handle_connect() aus dem paho-Netzwerk-Thread. Beide sind noetig
+        # (Geraet waehrend des Betriebs dazu / nach jedem Reconnect), aber sie
+        # duerfen einander nicht doppeln - ein zweites subscribe auf dasselbe
+        # Topic laesst manche Broker jede Nachricht zweimal ausliefern.
+        # Zurueckgesetzt wird die Menge bei jedem Verbindungswechsel, damit
+        # nach einem Abbruch wirklich neu abonniert wird.
+        self._aktiv_abonniert: set[str] = set()
+        self._abo_sperre = threading.RLock()
         # Client-ID: Account-Fragment fuer die Zuordnung, dazu die Kennung
         # DIESER Installation.
         #
@@ -113,8 +124,28 @@ class EcoFlowMqttListener:
         self._client.loop_start()
 
     def disconnect(self) -> None:
-        self._client.loop_stop()
+        """Verbindung abbauen - erst abmelden, DANN den Netzwerk-Thread anhalten.
+
+        Die Reihenfolge ist der ganze Punkt. `disconnect()` schreibt das
+        DISCONNECT-Paket nicht selbst, es beauftragt damit den Netzwerk-Thread.
+        Steht `loop_stop()` davor, ist dieser Thread schon weg - das Paket geht
+        nie raus, und der Broker beendet die Sitzung nicht, sondern laesst sie
+        offen stehen, bis irgendwann der Keepalive greift.
+
+        Am 25.08.2026 im Feld gemessen, bei der ersten planmaessigen
+        Abo-Erneuerung nach 12 h: Ab dem Neuverbinden kam jede Nachricht
+        DOPPELT - 799 Nutzlasten zweimal, jeweils im selben Millisekundenwert.
+        Zwei getrennte Sitzungen treffen nicht 799-mal dieselbe Millisekunde;
+        es war ein Lieferweg mit zwei Abonnements auf demselben Topic. Der
+        Broker hatte die nicht abgemeldete alte Sitzung beim Neuverbinden unter
+        derselben Client-ID mit der neuen zusammengelegt, ihr Abonnement
+        inbegriffen.
+
+        Schlimm war das nicht - identische Nutzlasten, die Anzeige stimmte.
+        Aber es haette sich alle 12 h um eine weitere Kopie erhoeht.
+        """
         self._client.disconnect()
+        self._client.loop_stop()
 
     def is_connected(self) -> bool:
         """Aktueller Verbindungszustand zum EcoFlow-Broker (fuer die Statusanzeige)."""
@@ -132,18 +163,29 @@ class EcoFlowMqttListener:
             self._do_subscribe(sn)
 
     def _do_subscribe(self, sn: str) -> None:
-        self._client.subscribe(f"/open/{self._cert.account}/{sn}/quota")
-        self._client.subscribe(f"/open/{self._cert.account}/{sn}/status")
+        with self._abo_sperre:
+            if sn in self._aktiv_abonniert:
+                return
+            self._aktiv_abonniert.add(sn)
+            self._client.subscribe(f"/open/{self._cert.account}/{sn}/quota")
+            self._client.subscribe(f"/open/{self._cert.account}/{sn}/status")
 
     def _handle_connect(self, _client, _userdata, _flags, reason_code, _properties=None) -> None:
         if reason_code != 0:
             logger.error("EcoFlow-MQTT-Verbindung abgelehnt (Code %s).", reason_code)
             return
         logger.info("EcoFlow-MQTT verbunden, abonniere %s Geraet(e).", len(self._subscribed_sns))
+        # Bewusst OHNE Zuruecksetzen: Hat subscribe_device() dieses Geraet auf
+        # dieser Sitzung schon abonniert - der Zustand kippt zwischen den
+        # beiden Wegen um Millisekunden -, dann waere ein zweites subscribe
+        # genau die Dublette, die wir loswerden wollen. Aufgeraeumt wird beim
+        # Verbindungsabbruch, denn erst dort endet die Sitzung.
         for sn in self._subscribed_sns:
             self._do_subscribe(sn)
 
     def _handle_disconnect(self, _client, _userdata, _flags, reason_code, _properties=None) -> None:
+        with self._abo_sperre:
+            self._aktiv_abonniert.clear()
         if reason_code != 0:
             logger.warning("EcoFlow-MQTT-Verbindung getrennt (Code %s) - paho versucht Reconnect.", reason_code)
 

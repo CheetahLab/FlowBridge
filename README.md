@@ -241,12 +241,13 @@ Details in [`docs/quota-fields-river2.md`](docs/quota-fields-river2.md) (German)
 | **[Synology-Einrichtung — Deutsch](docs/FlowBridge-Synology-DE.pdf)** | the same guide in German · also as [HTML](docs/FlowBridge-Synology-DE.html) |
 | [MQTT topics](docs/mqtt-topics.md) | complete topic list (German) |
 | [Field comparison River 2 Pro](docs/quota-fields-river2.md) | what the interface delivers — and what it does not (German) |
+| **[Changelog](CHANGELOG.md)** | what each version brought · [Deutsch](CHANGELOG.de.md) |
 
 This repository is a **mirror**, not a working directory: every published
 version stands here as one commit, the actual development happens elsewhere.
-What changed between two versions is therefore shown by comparing two commits —
-the number for it is in [`VERSION`](VERSION) and, as an immutable tag, on the
-matching image on Docker Hub.
+What changed between two versions is therefore recorded in the
+[changelog](CHANGELOG.md) — the number for it is in [`VERSION`](VERSION)
+and, as an immutable tag, on the matching image on Docker Hub.
 
 ## Local development
 
