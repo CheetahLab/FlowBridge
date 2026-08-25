@@ -40,6 +40,10 @@ body {
 }
 
 .fb-header {
+  /* Damit die Tooltip-Blase ueber der Statuszeile liegt: Die steht im
+     Markup NACH der Kopfzeile und wuerde sie sonst verdecken. */
+  position: relative;
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -82,7 +86,9 @@ body {
 .fb-header-controls {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  /* Enger als der uebrige Seitenabstand: Die Icons sind eine
+     zusammengehoerige Werkzeugleiste, keine Reihe einzelner Knoepfe. */
+  gap: 0.4rem;
 }
 
 .fb-toggle {
@@ -1072,6 +1078,26 @@ input[type="number"]::-webkit-inner-spin-button {
   color: var(--fb-muted);
 }
 
+/* "Aktuell" als Haken statt als Wort: gleiche Form wie die Werkzeugleiste
+   daneben, damit die Kopfzeile eine Reihe bleibt und nicht ein Knopf plus
+   eine Reihe. Der gruene Ton ist derselbe wie bei den Verbindungspunkten in
+   der Statuszeile - dort heisst er schon "laeuft", hier soll er nichts
+   anderes heissen. */
+.fb-update-symbol {
+  width: 2.1rem;
+  height: 2.1rem;
+  padding: 0;
+  border-radius: 8px;
+  justify-content: center;
+  color: var(--fb-status-online);
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.fb-update-symbol:hover,
+.fb-update-symbol:focus-visible {
+  border-color: var(--fb-status-online);
+}
+
 /* Noch nicht geprueft: bewusst unauffaellig. Es ist keine Warnung, sondern
    die ehrliche Aussage, dass keine Quelle eingerichtet ist. */
 .fb-update-unknown {
@@ -1090,6 +1116,7 @@ input[type="number"]::-webkit-inner-spin-button {
    die orange Update-Anzeige. Zwei kraeftige Flaechen nebeneinander wuerden
    um dieselbe Aufmerksamkeit streiten, und die Nummer ist die wichtigere. */
 .fb-whats-new {
+  margin-right: 0.35rem;
   display: inline-flex;
   align-items: center;
   padding: 0.35rem 0.2rem;
@@ -1104,16 +1131,34 @@ input[type="number"]::-webkit-inner-spin-button {
   text-decoration-thickness: 2px;
 }
 
+/* Werkzeugleiste der Kopfzeile.
+   Quadratisch und mit groesserem Radius als die uebrigen Knoepfe: Ein Symbol
+   hat keine Leserichtung, ein Knopf drumherum soll deshalb keine betonen.
+   Ein Textknopf ist breiter als hoch, weil Text laeuft - ein Symbol tut das
+   nicht, und ein in die Breite gezogener Rahmen um ein Zeichen sieht aus wie
+   eine Beschriftung, die vergessen wurde. */
 .fb-toggle-icon {
-  min-width: 2rem;
-  font-size: 0.95rem;
+  width: 2.1rem;
+  height: 2.1rem;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
   line-height: 1;
-  /* Die drei Icon-Knoepfe sollen gleich gross wirken, obwohl einer ein SVG
-     traegt und die anderen Schriftzeichen. Ohne das Zentrieren saesse das
+  color: var(--fb-muted);
+  /* Die Icon-Knoepfe sollen gleich gross wirken, obwohl die einen ein SVG
+     tragen und die anderen Schriftzeichen. Ohne das Zentrieren saesse das
      SVG an der Grundlinie der Schrift statt in der Mitte des Knopfes. */
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease;
+}
+
+.fb-toggle-icon:hover,
+.fb-toggle-icon:focus-visible {
+  border-color: var(--fb-flow);
+  color: var(--fb-flow);
 }
 
 /* Icon in Schriftgroesse, Farbe vom Knopf geerbt - damit es sich beim
@@ -1121,6 +1166,73 @@ input[type="number"]::-webkit-inner-spin-button {
 .fb-icon {
   width: 1.05em;
   height: 1.05em;
+}
+
+/* Eigene Tooltips statt des Browser-Attributs `title`.
+   Zwei Gruende, beide praktisch: Das native Fenster erscheint erst nach
+   rund einer Sekunde - lange genug, dass man in der Zwischenzeit schon
+   geklickt hat. Und es laesst sich nicht gestalten, sitzt also als graues
+   Systemkaestchen in einer sonst durchgestalteten Leiste.
+
+   Die Beschriftung steht zusaetzlich in `aria-label`: Die Blase hier ist
+   Dekoration fuer die Maus, kein Ersatz fuer den zugaenglichen Namen.
+   Deshalb `aria-hidden` am Pseudo-Element - sonst laese ein Screenreader
+   denselben Text zweimal. */
+.fb-tip {
+  position: relative;
+}
+
+.fb-tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--fb-tip-line);
+  border-radius: 6px;
+  background: var(--fb-tip-bg);
+  color: var(--fb-tip-text);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.3;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+/* Am rechten Rand der Kopfzeile wuerde eine mittig haengende Blase aus dem
+   Fenster ragen - dort haengt sie rechtsbuendig unter dem Knopf.
+   Ueber die Stellung in der Reihe und nicht ueber eine Klasse am Knopf:
+   Welcher Knopf der letzte ist, haengt vom Anmeldezustand ab (angemeldet
+   endet die Reihe mit Abmelden, sonst mit dem Design-Schalter). Die beiden
+   letzten deshalb generell, nicht der eine namentlich. */
+.fb-header-controls > :nth-last-child(-n + 2)::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+/* Fuer Faelle ausserhalb der Kopfzeile ausdruecklich setzbar. */
+.fb-tip-end::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.fb-tip:hover::after,
+.fb-tip:focus-visible::after {
+  opacity: 1;
+}
+
+/* Auf Zeigegeraeten ohne Hover (Touch) faellt die Blase weg: Sie liesse sich
+   nur durch Antippen ausloesen - und das loest zugleich die Aktion aus. */
+@media (hover: none) {
+  .fb-tip::after {
+    content: none;
+  }
 }
 
 /* Der Einstellungen-Knopf, waehrend die Einstellungen offen sind: Er fuehrt

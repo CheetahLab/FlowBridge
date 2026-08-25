@@ -129,13 +129,18 @@ export default function App() {
   const t = strings[lang];
   const angemeldet = authState?.authenticated === true;
   const updateStatus = versionInfo?.update.status ?? "unknown";
-
   // Prüfung direkt aus der Kopfzeile. Die Rückmeldung ist hier der heikle
   // Teil: Wer "Up-to-date" ist und prüft, bekommt wieder "Up-to-date" - ohne
   // Quittung sähe das aus, als hätte der Klick nichts getan. Deshalb erst
   // "Prüfe …", danach ein kurzes Aufleuchten.
   const [pruefeLaeuft, setPruefeLaeuft] = useState(false);
   const [geprueft, setGeprueft] = useState(false);
+
+  // "aktuell" ist der einzige Zustand ohne Handlungsbedarf - und damit der
+  // einzige, der ohne Worte auskommt. Waehrend der Pruefung steht dort Text,
+  // also darf der Knopf in dem Moment nicht quadratisch sein - sonst
+  // schnuerte er die Beschriftung ab.
+  const aktuell = updateStatus === "current" && !pruefeLaeuft;
 
   async function updatePruefen() {
     setPruefeLaeuft(true);
@@ -174,23 +179,49 @@ export default function App() {
             <button
               type="button"
               className={
-                `fb-update fb-update-${updateStatus}` + (geprueft ? " fb-update-geprueft" : "")
+                `fb-update fb-update-${updateStatus} fb-tip` +
+                (geprueft ? " fb-update-geprueft" : "") +
+                (aktuell ? " fb-update-symbol" : "")
               }
               onClick={updatePruefen}
               disabled={pruefeLaeuft}
-              title={versionInfo?.update.detail ?? t.updateClickHint}
+              aria-label={aktuell ? `${t.upToDate} – ${versionInfo?.version ?? ""}`.trim() : undefined}
+              data-tip={
+                versionInfo?.update.detail ??
+                (aktuell ? `${t.upToDate} – ${versionInfo?.version ?? ""}`.trim() : t.updateClickHint)
+              }
             >
-              {/* Bei verfügbarem Update die NUMMER dazu, nicht nur den Zustand.
-                  "Update verfügbar" allein lässt offen, ob man einen Sprung
-                  oder dreizehn vor sich hat – und die Nummer ist genau die,
-                  die gleich in die Compose-Datei muss. */}
-              {pruefeLaeuft
-                ? t.updateChecking
-                : updateStatus === "update"
-                  ? `${t.updateAvailable}: ${versionInfo?.update.latest ?? ""}`.trim()
-                  : updateStatus === "current"
-                    ? t.upToDate
-                    : t.updateUnknown}
+              {/* Der Zustand entscheidet, ob hier ein Wort oder ein Zeichen steht.
+                  "Up-to-date" ist die Abwesenheit einer Nachricht - dafuer
+                  genuegt ein Haken, und die Kopfzeile bleibt ruhig. Sobald es
+                  etwas zu tun gibt, gibt es auch etwas zu lesen: Bei
+                  verfuegbarem Update die NUMMER dazu, nicht nur den Zustand.
+                  "Update verfuegbar" allein laesst offen, ob man einen Sprung
+                  oder dreizehn vor sich hat - und die Nummer ist genau die,
+                  die gleich in die Compose-Datei muss. Beide uebrigen
+                  Zustaende ("wird geprueft", "nicht geprueft") bleiben Text:
+                  Sie sind selten und beschreiben nichts, wofuer es ein
+                  eingefuehrtes Zeichen gaebe. */}
+              {pruefeLaeuft ? (
+                t.updateChecking
+              ) : updateStatus === "update" ? (
+                `${t.updateAvailable}: ${versionInfo?.update.latest ?? ""}`.trim()
+              ) : aktuell ? (
+                <svg
+                  className="fb-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12.8 9.6 17.4 19 8" />
+                </svg>
+              ) : (
+                t.updateUnknown
+              )}
             </button>
           )}
           {/* Der Weg vom Hinweis zur Antwort. "Update verfuegbar" loest die
@@ -215,18 +246,18 @@ export default function App() {
               "Abmelden" stand vorher zwischen Sprache und Thema und trennte
               zwei Knoepfe, die zusammengehoeren. */}
           <button
-            className="fb-toggle fb-toggle-icon"
+            className="fb-toggle fb-toggle-icon fb-tip"
             onClick={() => setDialog("help")}
             aria-label={t.help}
-            title={t.help}
+            data-tip={t.help}
           >
             ?
           </button>
           <button
-            className="fb-toggle fb-toggle-icon"
+            className="fb-toggle fb-toggle-icon fb-tip"
             onClick={() => setDialog("about")}
             aria-label={t.about}
-            title={t.about}
+            data-tip={t.about}
           >
             ℹ
           </button>
@@ -237,10 +268,10 @@ export default function App() {
                weil manche Systeme das Zeichen als farbiges Emoji setzen -
                dann faellt es aus der Reihe, statt sich einzufuegen. */
             <button
-              className={`fb-toggle fb-toggle-icon ${view === "settings" ? "fb-toggle-on" : ""}`}
+              className={`fb-toggle fb-toggle-icon fb-tip ${view === "settings" ? "fb-toggle-on" : ""}`}
               onClick={() => setView(view === "settings" ? "dashboard" : "settings")}
               aria-label={view === "settings" ? t.backToDashboard : t.settings}
-              title={view === "settings" ? t.backToDashboard : t.settings}
+              data-tip={view === "settings" ? t.backToDashboard : t.settings}
             >
               <svg
                 className="fb-icon"
@@ -257,32 +288,88 @@ export default function App() {
               </svg>
             </button>
           )}
+          {/* Als einziger Knopf Text statt Symbol, und das mit Absicht: Ein
+              Sprachkuerzel sagt in zwei Zeichen, was gerade eingestellt ist -
+              eine Weltkugel oder ein Faehnchen sagt es nicht. Die Reihe
+              bleibt trotzdem ruhig, weil Hoehe und Rahmen dieselben sind. */}
           <button
-            className="fb-toggle"
+            className="fb-toggle fb-toggle-icon fb-tip"
             onClick={() => setLang(lang === "de" ? "en" : "de")}
-            aria-label="Sprache wechseln"
+            aria-label={t.switchLanguage}
+            data-tip={t.switchLanguage}
           >
             {lang === "de" ? "DE" : "EN"}
           </button>
+          {/* Mond und Sonne als SVG statt als Emoji. Die Zeichen 🌙 und ☀️
+              werden auf vielen Systemen farbig gesetzt - dann leuchtet ein
+              gelber Klecks in einer Reihe grauer Striche. Gezeigt wird das
+              AKTUELLE Design; wohin der Klick fuehrt, sagt der Tooltip. */}
           <button
-            className="fb-toggle fb-toggle-icon"
+            className="fb-toggle fb-toggle-icon fb-tip"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label="Theme wechseln"
+            aria-label={theme === "dark" ? t.switchToLight : t.switchToDark}
+            data-tip={theme === "dark" ? t.switchToLight : t.switchToDark}
           >
-            {theme === "dark" ? "🌙" : "☀️"}
+            {theme === "dark" ? (
+              <svg
+                className="fb-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z" />
+              </svg>
+            ) : (
+              <svg
+                className="fb-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="4.2" />
+                <path d="M12 2.4v2.2M12 19.4v2.2M4.2 12H2M22 12h-2.2M5.6 5.6 7.2 7.2M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6" />
+              </svg>
+            )}
           </button>
           {angemeldet && (
+            /* Abmelden war der letzte Textknopf der Reihe und damit der
+               einzige, der aus ihr herausfiel. Als Symbol: Pfeil, der aus
+               einer Klammer heraustritt - die uebliche Darstellung fuers
+               Verlassen, und sie zeigt aus dem Bildschirm hinaus, nicht
+               hinein. */
             <button
-              className="fb-toggle"
+              className="fb-toggle fb-toggle-icon fb-tip"
               onClick={async () => {
                 await logout().catch(() => undefined);
                 setAuthState({ configured: true, authenticated: false, min_length: 8 });
                 setConfig(null);
                 setView("loading");
               }}
-              title={t.logout}
+              aria-label={t.logout}
+              data-tip={t.logout}
             >
-              {t.logout}
+              <svg
+                className="fb-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M14 4.5h4a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5h-4" />
+                <path d="M10 16l4-4-4-4" />
+                <path d="M14 12H4.5" />
+              </svg>
             </button>
           )}
         </div>

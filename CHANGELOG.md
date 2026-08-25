@@ -18,6 +18,31 @@ The version your installation runs is shown in the top right of the interface.
 
 ---
 
+## 2026.08.25-02
+
+### Changed
+
+- **The header became a toolbar.** Log out was the last labelled button and
+  therefore the only one breaking the row — it now carries an icon like its
+  neighbours. All buttons are the same size and square, and moon and sun are
+  drawings instead of emoji (some systems render those in colour, leaving a
+  blob glowing in a row of grey strokes).
+- **"Up-to-date" is a green checkmark.** That state is the absence of news; a
+  symbol is enough for it. As soon as there is something to do, there is
+  something to read again: when an update is available the version number
+  stays, because that is the part you need.
+- **Custom tooltips instead of the browser's.** The native one appears only
+  after about a second and cannot be styled. On devices without a pointer it
+  is dropped — there it could only be triggered by tapping, and that triggers
+  the action at the same time.
+
+### Fixed
+
+- The screen reader labels of the language and theme buttons were hardcoded in
+  German regardless of the selected language.
+
+---
+
 ## 2026.08.25-01
 
 ### Fixed

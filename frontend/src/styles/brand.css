@@ -40,6 +40,11 @@
   --fb-muted: var(--fb-dark-muted);
   /* Fuellung der Protocol-Rail-Kapsel im Logo (Werte aus den CI-SVGs) */
   --fb-rail-fill: #102440;
+  /* Tooltip-Blase. Auf dunklem Grund braucht sie eine Kante, sonst
+     verschwimmt sie mit dem Hintergrund. */
+  --fb-tip-bg: var(--fb-deep-blue);
+  --fb-tip-text: var(--fb-arctic-white);
+  --fb-tip-line: var(--fb-dark-line);
   /* Farbe fuer hervorgehobene Zahlenwerte. Auf dunklem Grund traegt das
      helle Eisblau gut. */
   --fb-value: var(--fb-ice-blue);
@@ -52,6 +57,12 @@
   --fb-text: var(--fb-light-text);
   --fb-muted: var(--fb-light-muted);
   --fb-rail-fill: #EEF5FF;
+  /* Im Hellmodus bleibt die Blase dunkel - eine helle Blase auf hellem
+     Grund braeuchte wieder einen Rahmen, um ueberhaupt als Blase zu gelten,
+     und die dunkle liest sich auf einen Blick als "gehoert nicht zur Seite". */
+  --fb-tip-bg: var(--fb-polar-navy);
+  --fb-tip-text: var(--fb-arctic-white);
+  --fb-tip-line: transparent;
   /* Eisblau auf Weiss ergibt nur ~2:1 Kontrast - die Messwerte waeren kaum
      lesbar. Deshalb im Hellmodus ein dunkleres Blau derselben Familie
      (~6:1 gegen Weiss). */

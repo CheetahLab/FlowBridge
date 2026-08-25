@@ -18,6 +18,31 @@ Die Fassung deiner Installation steht oben rechts in der Oberfläche.
 
 ---
 
+## 2026.08.25-02
+
+### Geändert
+
+- **Die Kopfzeile ist eine Werkzeugleiste geworden.** Abmelden war der letzte
+  Knopf mit Beschriftung und damit der einzige, der aus der Reihe fiel — jetzt
+  trägt er ein Symbol wie seine Nachbarn. Alle Knöpfe sind gleich groß und
+  quadratisch, Mond und Sonne sind Zeichnungen statt Emoji (die setzen manche
+  Systeme farbig, dann leuchtet ein Klecks in einer Reihe grauer Striche).
+- **„Up-to-date" ist ein grüner Haken.** Dieser Zustand ist die Abwesenheit
+  einer Nachricht; dafür genügt ein Zeichen. Sobald es etwas zu tun gibt, gibt
+  es wieder etwas zu lesen: Bei verfügbarem Update steht die Versionsnummer
+  da, denn genau die wird gebraucht.
+- **Eigene Tooltips statt der Browser-Blase.** Die native erscheint erst nach
+  etwa einer Sekunde und lässt sich nicht gestalten. Auf Geräten ohne
+  Mauszeiger entfällt sie — dort ließe sie sich nur durch Antippen auslösen,
+  und das löst zugleich die Aktion aus.
+
+### Behoben
+
+- Die Beschriftungen von Sprach- und Design-Knopf für Screenreader waren fest
+  deutsch, unabhängig von der eingestellten Sprache.
+
+---
+
 ## 2026.08.25-01
 
 ### Behoben
