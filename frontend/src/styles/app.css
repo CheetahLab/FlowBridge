@@ -1353,6 +1353,91 @@ input[type="number"]::-webkit-inner-spin-button {
   margin-bottom: 1.4rem;
 }
 
+/* Textknopf, der wie ein Link aussieht. Er ist bewusst ein <button> und kein
+   <a>: Er fuehrt nirgendwo hin, er oeffnet einen Dialog. Ein <a href="#">
+   waere fuer Tastatur und Screenreader eine Luege ueber das, was gleich
+   passiert. */
+.fb-link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--fb-flow);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.fb-changelog-titel {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+}
+
+/* Der Fliesstext des Protokolls. Etwas schmaler gesetzt als der uebrige
+   Dialoginhalt waere hier falsch - es sind Listen, keine Prosa. */
+.fb-changelog {
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.fb-changelog ul {
+  margin: 0.3rem 0 0.9rem;
+  padding-left: 1.2rem;
+}
+
+.fb-changelog li {
+  margin-bottom: 0.45rem;
+}
+
+.fb-changelog p {
+  margin: 0.4rem 0 0.9rem;
+}
+
+.fb-changelog hr {
+  border: none;
+  border-top: 1px solid var(--fb-line);
+  margin: 1.1rem 0;
+}
+
+.fb-changelog code {
+  font-size: 0.85em;
+  padding: 0.05em 0.3em;
+  border-radius: 4px;
+  background: var(--fb-bg);
+}
+
+/* Die Fassungsnummer traegt die Gliederung - sie soll beim Ueberfliegen
+   sofort ins Auge fallen, denn danach sucht man. */
+.fb-changelog-version {
+  margin: 1.2rem 0 0.2rem;
+  font-size: 1rem;
+  color: var(--fb-value);
+}
+
+.fb-changelog-version:first-child {
+  margin-top: 0;
+}
+
+/* "deine Fassung" - die Antwort auf "wo stehe ich in dieser Liste?". */
+.fb-changelog-hier {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: var(--fb-status-online);
+  color: var(--fb-polar-navy);
+  font-size: 0.7rem;
+  font-weight: 600;
+  vertical-align: 0.1em;
+}
+
+.fb-changelog-art {
+  margin: 0.7rem 0 0;
+  font-size: 0.85rem;
+  color: var(--fb-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .fb-help-title {
   margin: 0 0 0.5rem;
   font-size: 0.78rem;

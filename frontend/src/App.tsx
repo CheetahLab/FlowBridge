@@ -3,6 +3,7 @@ import { checkUpdateNow, getAuthState, getConfig, getVersion, logout } from "./a
 import AboutDialog from "./components/AboutDialog";
 import Dashboard from "./components/Dashboard";
 import HealthBar from "./components/HealthBar";
+import ChangelogDialog from "./components/ChangelogDialog";
 import HelpDialog from "./components/HelpDialog";
 import LoginForm from "./components/LoginForm";
 import Logo from "./components/Logo";
@@ -13,7 +14,7 @@ import { strings, type Language, type Theme } from "./i18n";
 import type { AppConfig, AuthState, VersionInfo } from "./types";
 
 type View = "loading" | "setup" | "dashboard" | "settings";
-type Dialog = "about" | "help" | null;
+type Dialog = "about" | "help" | "changelog" | null;
 
 // Die Version aendert sich nur beim Neustart - stuendlich nachsehen genuegt.
 // Sobald die Update-Quelle steht, ist das zugleich der Prueftakt.
@@ -230,15 +231,14 @@ export default function App() {
               gewoehnt man sich schneller an. Nur bei tatsaechlich
               verfuegbarem Update sichtbar, sonst waere es Dauerdekoration. */}
           {angemeldet && view !== "setup" && updateStatus === "update" && (
-            <a
+            <button
+              type="button"
               className="fb-whats-new"
-              href={t.changelogUrl}
-              target="_blank"
-              rel="noreferrer noopener"
+              onClick={() => setDialog("changelog")}
               title={t.whatsNewHint}
             >
               {t.whatsNew}
-            </a>
+            </button>
           )}
           {/* Reihenfolge nach Aufgabe, nicht nach Entstehung:
               nachschlagen (Hilfe, Info) - aendern (Einstellungen) -
@@ -431,6 +431,7 @@ export default function App() {
             onUpdateGeprueft={(neu) =>
               setVersionInfo((alt) => (alt ? { ...alt, update: neu } : alt))
             }
+            onChangelog={() => setDialog("changelog")}
           />
         )}
 
@@ -448,6 +449,13 @@ export default function App() {
         />
       )}
       {dialog === "help" && <HelpDialog t={t} lang={lang} onClose={() => setDialog(null)} />}
+      {dialog === "changelog" && (
+        <ChangelogDialog
+          t={t}
+          version={versionInfo?.version ?? null}
+          onClose={() => setDialog(null)}
+        />
+      )}
     </>
   );
 }

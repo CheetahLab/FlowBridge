@@ -20,10 +20,12 @@ export default function UpdateSection({
   t,
   info,
   onGeprueft,
+  onChangelog,
 }: {
   t: Strings;
   info: VersionInfo | null;
   onGeprueft: (neu: VersionInfo["update"]) => void;
+  onChangelog: () => void;
 }) {
   const [laeuft, setLaeuft] = useState(false);
   const [fehler, setFehler] = useState<string | null>(null);
@@ -71,13 +73,26 @@ export default function UpdateSection({
         </button>
       </div>
 
+      {/* Hier bleibt der Zustand ein SATZ, waehrend die Kopfzeile ein Zeichen
+          zeigt. Kein Widerspruch, sondern zwei Aufgaben: Oben ein Blick im
+          Vorbeigehen, hier der Ort zum Nachlesen und Entscheiden - da spart
+          ein Symbol keinen Platz, es nimmt nur Auskunft weg.
+
+          Die laufende Nummer gehoert dazu. Ohne sie stand hier "Up-to-date",
+          aber nicht, WORAUF - sie steht sonst nur in der Statuszeile am
+          Dashboard, also eine Ansicht weiter. */}
       <p className="fb-muted fb-diag-state">
         {status === "update"
           ? `${t.updateAvailable}: ${neueste ?? ""}`
           : status === "current"
             ? t.upToDate
             : t.updateUnknown}
+        {info?.version ? ` · ${info.version}` : ""}
         {info?.update.detail ? ` · ${info.update.detail}` : ""}
+        {" · "}
+        <button type="button" className="fb-link-button" onClick={onChangelog}>
+          {t.whatsNew}
+        </button>
       </p>
 
       <div className="fb-actions">

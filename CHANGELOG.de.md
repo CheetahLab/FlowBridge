@@ -18,6 +18,28 @@ Die Fassung deiner Installation steht oben rechts in der Oberfläche.
 
 ---
 
+## 2026.08.25-03
+
+### Neu
+
+- **Die Änderungen stehen jetzt im Programm.** „Was ist neu?" öffnet ein
+  Fenster statt eines Browser-Tabs, und die laufende Fassung ist darin
+  markiert — die Antwort auf „wo stehe ich in dieser Liste eigentlich?".
+  Erreichbar an zwei Stellen: in der Kopfzeile, sobald ein Update ansteht,
+  und dauerhaft unter Einstellungen › Updates.
+- **Unter Einstellungen › Updates steht jetzt die laufende Versionsnummer.**
+  Vorher stand dort „Up-to-date", aber nicht, worauf — die Nummer war nur
+  eine Ansicht weiter zu finden.
+
+Der Text wird beim Öffnen aus dem Netz geholt und nicht mitgeliefert. Anders
+ginge es nicht: Ein eingebautes Protokoll wäre auf dem Stand der installierten
+Fassung eingefroren und könnte gerade die Frage nicht beantworten, die es
+auslöst — was bringt das Update, das man noch nicht hat. Geholt wird aus dem
+Browser und nur auf Klick, also dieselbe Verbindung, die ein Link auch
+aufgebaut hätte. Ohne Netz nennt das Fenster den Grund und den Link.
+
+---
+
 ## 2026.08.25-02
 
 ### Geändert

@@ -18,6 +18,27 @@ The version your installation runs is shown in the top right of the interface.
 
 ---
 
+## 2026.08.25-03
+
+### Added
+
+- **The changelog now lives in the app.** "What's new?" opens a window
+  instead of a browser tab, and the version you are running is marked in it —
+  the answer to "where in this list am I, actually?". Reachable in two places:
+  in the header once an update is pending, and permanently under
+  Settings › Updates.
+- **Settings › Updates now shows the running version number.** Previously it
+  said "Up-to-date" but not what of — the number was one view away.
+
+The text is fetched when you open it rather than shipped inside the image.
+There is no other way: a built-in changelog would be frozen at the state of
+the installed version and could not answer the very question that prompts it —
+what does the update I do not have yet contain. It is fetched from the browser
+and only on a click, so it is the same connection a link would have opened.
+Without a network the window states the reason and offers the link.
+
+---
+
 ## 2026.08.25-02
 
 ### Changed

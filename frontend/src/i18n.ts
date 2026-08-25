@@ -136,8 +136,15 @@ export const strings = {
     switchToLight: "Zum hellen Design wechseln",
     switchToDark: "Zum dunklen Design wechseln",
     whatsNew: "Was ist neu?",
-    whatsNewHint: "Änderungen dieser Fassung nachlesen (öffnet GitHub)",
+    whatsNewHint: "Nachlesen, was sich geändert hat",
+    whatsNewTitle: "Änderungen",
     changelogUrl: "https://github.com/CheetahLab/FlowBridge/blob/main/CHANGELOG.de.md",
+    changelogRawUrl:
+      "https://raw.githubusercontent.com/CheetahLab/FlowBridge/main/CHANGELOG.de.md",
+    changelogYours: "deine Fassung",
+    changelogOffline:
+      "Die Änderungen ließen sich nicht laden – FlowBridge holt sie beim Öffnen aus dem Netz.",
+    changelogOpenOnline: "Im Browser öffnen",
     updateTitle: "Updates",
     updateSectionHint:
       "FlowBridge sieht nach, ob es eine neuere Fassung gibt – beim Start und danach alle sechs Stunden.",
@@ -397,8 +404,15 @@ export const strings = {
     switchToLight: "Switch to the light theme",
     switchToDark: "Switch to the dark theme",
     whatsNew: "What's new?",
-    whatsNewHint: "Read what changed in this version (opens GitHub)",
+    whatsNewHint: "Read what has changed",
+    whatsNewTitle: "Changelog",
     changelogUrl: "https://github.com/CheetahLab/FlowBridge/blob/main/CHANGELOG.md",
+    changelogRawUrl:
+      "https://raw.githubusercontent.com/CheetahLab/FlowBridge/main/CHANGELOG.md",
+    changelogYours: "your version",
+    changelogOffline:
+      "The changelog could not be loaded – FlowBridge fetches it from the web when you open it.",
+    changelogOpenOnline: "Open in the browser",
     updateTitle: "Updates",
     updateSectionHint:
       "FlowBridge checks whether a newer version exists – at startup and every six hours after that.",

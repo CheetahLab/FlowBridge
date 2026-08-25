@@ -46,6 +46,7 @@ export default function SettingsView({
   onApplyUi,
   versionInfo,
   onUpdateGeprueft,
+  onChangelog,
 }: {
   t: Strings;
   config: AppConfig;
@@ -56,6 +57,7 @@ export default function SettingsView({
   onApplyUi: (theme: Theme, language: Language) => void;
   versionInfo: VersionInfo | null;
   onUpdateGeprueft: (neu: VersionInfo["update"]) => void;
+  onChangelog: () => void;
 }) {
   // Modelle für den Betreff der Einsende-Mail. Aus der Config, nicht aus dem
   // Live-Zustand: Ein Gerät, das gerade nicht meldet, gehört trotzdem dazu -
@@ -125,7 +127,12 @@ export default function SettingsView({
 
       {tab === "updates" && (
         <div className="fb-card fb-card-wide">
-          <UpdateSection t={t} info={versionInfo} onGeprueft={onUpdateGeprueft} />
+          <UpdateSection
+            t={t}
+            info={versionInfo}
+            onGeprueft={onUpdateGeprueft}
+            onChangelog={onChangelog}
+          />
         </div>
       )}
 
