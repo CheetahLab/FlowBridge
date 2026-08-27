@@ -18,6 +18,23 @@ Die Fassung deiner Installation steht oben rechts in der Oberfläche.
 
 ---
 
+## 2026.08.27-02
+
+### Neu
+
+- **Abbilder für ARM64.** Bisher wurde nur `linux/amd64` gebaut — richtig für
+  die NAS, auf der das hier entstanden ist, aber es schloss jedes ARM-Gerät
+  aus: Raspberry Pi, die kleinen Synology-Modelle, Apple Silicon. Beide
+  Architekturen liegen jetzt unter derselben Marke; der eigene Rechner nimmt
+  sich die passende, an der compose-Datei ändert sich nichts. Für 32 Bit
+  (`armhf`) gibt es kein Abbild.
+
+  Beide werden vor der Veröffentlichung wirklich gestartet und befragt — ein
+  ungetestetes Abbild für ein Gerät, das der Autor selbst nicht hat, ist ein
+  Versprechen, das beim Fremden platzt.
+
+---
+
 ## 2026.08.25-03
 
 ### Neu

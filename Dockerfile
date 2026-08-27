@@ -1,5 +1,17 @@
 # --- Stage 1: Frontend-Build ---
-FROM node:22-slim AS frontend-build
+#
+# --platform=$BUILDPLATFORM heisst: Diese Stufe laeuft IMMER auf der
+# Architektur des bauenden Rechners, auch wenn das Ziel arm64 ist.
+#
+# Erlaubt ist das, weil hier nichts Architektur-Gebundenes entsteht: npm baut
+# JavaScript und CSS, und die sind auf einem Raspberry Pi Byte fuer Byte
+# dieselben wie hier. Uebernommen wird aus dieser Stufe ohnehin nur
+# /build/dist.
+#
+# Ohne die Zeile liefe der Frontend-Bau beim arm64-Abbild unter QEMU-Emulation
+# mit - `npm ci` und der Vite-Bau sind der teuerste Teil des ganzen Dockerfiles
+# und wuerden dort ein Vielfaches brauchen, fuer ein identisches Ergebnis.
+FROM --platform=$BUILDPLATFORM node:22-slim AS frontend-build
 WORKDIR /build
 COPY frontend/package*.json ./
 RUN npm ci

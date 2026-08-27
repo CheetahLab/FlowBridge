@@ -18,6 +18,22 @@ The version your installation runs is shown in the top right of the interface.
 
 ---
 
+## 2026.08.27-02
+
+### Added
+
+- **Images for ARM64.** Until now only `linux/amd64` was built — right for the
+  NAS this was developed on, but it left out every ARM machine: Raspberry Pi,
+  the smaller Synology models, Apple Silicon. Both architectures now sit under
+  the same tag; your machine picks the one that fits, nothing changes in the
+  compose file. There is no 32-bit build (`armhf`).
+
+  Both are actually started and queried before anything is published — an
+  untested image for a machine the author does not own is a promise that
+  breaks at someone else's house.
+
+---
+
 ## 2026.08.25-03
 
 ### Added

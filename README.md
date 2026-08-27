@@ -53,6 +53,11 @@ The image is on **Docker Hub** and can be pulled directly:
 docker pull cheetahlab/flowbridge:latest
 ```
 
+Images are published for **x86-64** and **ARM64** under the same tag — a
+Synology or Intel NAS gets one, a Raspberry Pi 4/5 (64-bit OS) or a Mac with
+Apple Silicon the other, without you having to pick. There is no 32-bit image;
+an older Pi running `armhf` is out.
+
 Or straight away as a `compose.yaml`:
 
 ```yaml
@@ -265,7 +270,7 @@ and, as an immutable tag, on the matching image on Docker Hub.
 | `src/inventar.py` | field inventory |
 | `src/exporters.py`, `src/ha_discovery.py` | EisBär export, Home Assistant discovery |
 | `frontend/` | React + Vite + TypeScript |
-| `tests/` | 346 tests, `pytest` |
+| `tests/` | 374 tests, `pytest` |
 
 ```bash
 pip install -r requirements.txt

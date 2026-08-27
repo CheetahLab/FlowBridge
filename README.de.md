@@ -54,6 +54,11 @@ Das Abbild liegt auf **Docker Hub** und lässt sich direkt ziehen:
 docker pull cheetahlab/flowbridge:latest
 ```
 
+Es gibt Abbilder für **x86-64** und **ARM64** unter derselben Marke — ein
+Synology- oder Intel-NAS bekommt automatisch das eine, ein Raspberry Pi 4/5
+(64-Bit-Betriebssystem) oder ein Mac mit Apple Silicon das andere. Für
+32-Bit-Systeme gibt es keins; ein alter Pi mit `armhf` bleibt außen vor.
+
 Oder gleich als `compose.yaml`:
 
 ```yaml
@@ -269,7 +274,7 @@ Docker Hub.
 | `src/inventar.py` | Feldinventar |
 | `src/exporters.py`, `src/ha_discovery.py` | EisBär-Export, Home-Assistant-Discovery |
 | `frontend/` | React + Vite + TypeScript |
-| `tests/` | 346 Tests, `pytest` |
+| `tests/` | 374 Tests, `pytest` |
 
 ```bash
 pip install -r requirements.txt
