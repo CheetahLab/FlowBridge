@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: light)" srcset="assets/brand/flowbridge-logo-no-subtitle-light.png">
-    <img src="assets/brand/flowbridge-logo-no-subtitle-dark.png" alt="FlowBridge" width="820">
+    <source media="(prefers-color-scheme: light)" srcset="assets/brand/flowbridge-wordmark-light.png">
+    <img src="assets/brand/flowbridge-wordmark-dark.png" alt="FlowBridge" width="420">
   </picture>
 </p>
 

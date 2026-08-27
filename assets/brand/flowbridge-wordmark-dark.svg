@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  FlowBridge - Wortmarke fuer README und Registry-Seiten (dunkler Grund).
+
+  Dieselbe Geometrie wie die Marke in der Oberflaeche (frontend/src/components/
+  Logo.tsx): Rail-Kachel mit drei Punkten, daneben der zweifarbig gesetzte Name.
+  Sie loest das Banner vom 11.08.2026 ab, das die Rail noch ZWISCHEN "Flow" und
+  "Bridge" stellte - dort las sie sich als Trennzeichen und machte aus einem
+  Namen zwei Woerter. Jetzt traegt die Farbe die Zweiteilung, das Zeichen steht
+  fuer sich und ist als Kachel zugleich das App-Symbol.
+
+  Farbfolge Electric Blue -> Ice Blue -> Signal Orange, von links nach rechts:
+  Das ist der Weg der Daten, wie FlowBridge ihn nimmt - EcoFlow-Cloud herein,
+  eigener Broker hinaus. (Das Schwesterwerkzeug aus derselben Schmiede dreht
+  dieselbe Rail um, weil dort die fremde Cloud am Anfang steht.)
+
+  Feste Farbwerte statt CSS-Variablen: Die Datei wird ausserhalb des Dokuments
+  geladen (GitHub, Docker Hub), dort gibt es die Variablen nicht. Deshalb zwei
+  Fassungen - das README waehlt per prefers-color-scheme.
+
+  Der Akzent ist Electric Blue (#0a6bff), in BEIDEN Fassungen dieselbe Farbe -
+  wie beim Schwesterwerkzeug. In der Oberflaeche traegt "Bridge" dagegen die Variable fb-value, also
+  auf Dunkel das blassere Ice Blue: Dort steht die Marke neben Messwerten und soll
+  sich nicht vordraengen. Ein Logo hat diese Nachbarschaft nicht - es steht allein
+  auf einer Repo-Seite und darf die kraeftigere Farbe nehmen.
+
+  KEIN Untertitel in der Grafik. Er steht als Text darunter, wo ihn auch ein
+  Bildschirmleser bekommt und wo er uebersetzbar bleibt.
+
+  Die Schrift ist eine STACK-Angabe, keine Einbettung - wie in der Oberflaeche
+  (app.css: Inter, Segoe UI, system-ui). Wer Inter nicht hat, bekommt die
+  naechstbeste Grotesk.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 410 136" width="410" height="136"
+     role="img" aria-label="FlowBridge">
+  <title>FlowBridge</title>
+
+  <g transform="translate(20 20)">
+    <rect x="0" y="0" width="96" height="96" rx="21" fill="#102440"/>
+    <g transform="translate(4.03 48) scale(1.2218)">
+      <path d="M17 0H51" stroke="#7db7ff" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="20" cy="0" r="6" fill="#0a6bff"/>
+      <circle cx="34" cy="0" r="6" fill="#7db7ff"/>
+      <circle cx="52" cy="0" r="6" fill="#ff7a00"/>
+    </g>
+  </g>
+
+  <text x="140" y="93" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif"
+        font-size="46" font-weight="650" letter-spacing="-0.7">
+    <tspan fill="#f7f9fc">Flow</tspan><tspan fill="#0a6bff">Bridge</tspan>
+  </text>
+</svg>
