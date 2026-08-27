@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="assets/social/flowbridge-readme-banner.png" alt="FlowBridge" width="820">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="assets/brand/flowbridge-logo-no-subtitle-light.png">
+    <img src="assets/brand/flowbridge-logo-no-subtitle-dark.png" alt="FlowBridge" width="820">
+  </picture>
 </p>
 
 <p align="center">
